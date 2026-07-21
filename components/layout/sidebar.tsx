@@ -11,6 +11,7 @@ import {
   Globe,
   Server,
   RefreshCw,
+  TrendingUp,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/plans', label: 'Plans', icon: LayoutDashboard },
   { href: '/domains', label: 'Domains', icon: Globe },
+  { href: '/profit-loss', label: 'Profit & Loss', icon: TrendingUp },
   { href: '/hosting', label: 'Hosting', icon: Server },
   { href: '/whmcs-sync', label: 'WHMCS Sync', icon: RefreshCw },
 ];

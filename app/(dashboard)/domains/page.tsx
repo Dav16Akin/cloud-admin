@@ -44,13 +44,16 @@ export default function DomainsPage() {
   const [isEditingGlobals, setIsEditingGlobals] = useState(false);
   const [usdRate, setUsdRate] = useState('');
   const [eurRate, setEurRate] = useState('');
+  const [globalMarkupType, setGlobalMarkupType] = useState<'PERCENTAGE' | 'FLAT_FEE'>('PERCENTAGE');
   const [globalMarkup, setGlobalMarkup] = useState('');
+  const [globalFlatFee, setGlobalFlatFee] = useState('');
 
   // Extension override editing state
   const [selectedExtension, setSelectedExtension] = useState<string | null>(null);
+  const [tldMarkupType, setTldMarkupType] = useState<'PERCENTAGE' | 'FLAT_FEE' | 'CUSTOM_PRICE'>('PERCENTAGE');
   const [tldMarkup, setTldMarkup] = useState('');
+  const [tldFlatFee, setTldFlatFee] = useState('');
   const [tldCustomPrice, setTldCustomPrice] = useState('');
-  const [useFlatPrice, setUseFlatPrice] = useState(false);
 
   // Simple Notification banner state
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -66,7 +69,9 @@ export default function DomainsPage() {
     if (pricingData?.globalSettings) {
       setUsdRate(String(pricingData.globalSettings.usdToNgn));
       setEurRate(String(pricingData.globalSettings.eurToNgn));
+      setGlobalMarkupType(pricingData.globalSettings.globalMarkupType || 'PERCENTAGE');
       setGlobalMarkup(String(pricingData.globalSettings.globalMarkup));
+      setGlobalFlatFee(String(pricingData.globalSettings.globalFlatFee ?? 5000));
     }
     setIsEditingGlobals(true);
   };
@@ -77,7 +82,9 @@ export default function DomainsPage() {
       await updateGlobalPricing.mutateAsync({
         usdToNgn: parseFloat(usdRate),
         eurToNgn: parseFloat(eurRate),
+        globalMarkupType,
         globalMarkup: parseFloat(globalMarkup),
+        globalFlatFee: parseFloat(globalFlatFee),
       });
       setIsEditingGlobals(false);
       showToast('Global pricing settings updated successfully', 'success');
@@ -88,9 +95,10 @@ export default function DomainsPage() {
 
   const handleEditExtension = (extItem: any) => {
     setSelectedExtension(extItem.extension);
+    setTldMarkupType(extItem.markupType || 'PERCENTAGE');
     setTldMarkup(String(extItem.markupPercentage));
+    setTldFlatFee(extItem.flatFee !== null ? String(extItem.flatFee) : '');
     setTldCustomPrice(extItem.customPrice !== null ? String(extItem.customPrice) : '');
-    setUseFlatPrice(extItem.customPrice !== null);
   };
 
   const handleSaveExtension = async (e: React.FormEvent) => {
@@ -100,8 +108,10 @@ export default function DomainsPage() {
     try {
       await updateExtensionPricing.mutateAsync({
         extension: selectedExtension,
-        markupPercentage: useFlatPrice ? undefined : parseFloat(tldMarkup),
-        customPrice: useFlatPrice ? parseFloat(tldCustomPrice) : null,
+        markupType: tldMarkupType,
+        markupPercentage: tldMarkupType === 'PERCENTAGE' ? parseFloat(tldMarkup) : undefined,
+        flatFee: tldMarkupType === 'FLAT_FEE' ? parseFloat(tldFlatFee) : null,
+        customPrice: tldMarkupType === 'CUSTOM_PRICE' ? parseFloat(tldCustomPrice) : null,
       });
       setSelectedExtension(null);
       showToast(`Pricing override updated for .${selectedExtension}`, 'success');
@@ -255,7 +265,7 @@ export default function DomainsPage() {
             <Card className="relative overflow-hidden group">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Global Profit Margin</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Global Profit Margin Mode</span>
                   <div className="p-2 bg-secondary text-primary">
                     <Percent size={16} />
                   </div>
@@ -265,11 +275,18 @@ export default function DomainsPage() {
                 {isPricingLoading ? (
                   <div className="h-9 w-24 bg-muted animate-pulse mb-2" />
                 ) : (
-                  <p className="text-3xl font-extrabold text-[#e8900a]">
-                    {pricingData?.globalSettings.globalMarkup}%
-                  </p>
+                  <div>
+                    <p className="text-3xl font-extrabold text-[#e8900a]">
+                      {pricingData?.globalSettings.globalMarkupType === 'FLAT_FEE'
+                        ? `+₦${pricingData?.globalSettings.globalFlatFee.toLocaleString()}`
+                        : `${pricingData?.globalSettings.globalMarkup}%`}
+                    </p>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase">
+                      {pricingData?.globalSettings.globalMarkupType === 'FLAT_FEE' ? 'Flat NGN Fee Added' : 'Percentage Markup'}
+                    </span>
+                  </div>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">Default percentage markup added above cost.</p>
+                <p className="text-xs text-muted-foreground mt-1">Default profit added after FX conversion.</p>
               </CardContent>
             </Card>
           </div>
@@ -281,52 +298,84 @@ export default function DomainsPage() {
                 <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">Update Global Pricing Settings</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSaveGlobals} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">USD Rate (₦)</label>
-                    <input
-                      type="number"
-                      required
-                      value={usdRate}
-                      onChange={(e) => setUsdRate(e.target.value)}
-                      className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
-                      placeholder="e.g. 1400"
-                    />
+                <form onSubmit={handleSaveGlobals} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">USD Rate (₦)</label>
+                      <input
+                        type="number"
+                        required
+                        value={usdRate}
+                        onChange={(e) => setUsdRate(e.target.value)}
+                        className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                        placeholder="e.g. 1400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">EUR Rate (₦)</label>
+                      <input
+                        type="number"
+                        required
+                        value={eurRate}
+                        onChange={(e) => setEurRate(e.target.value)}
+                        className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                        placeholder="e.g. 1640"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Global Markup Mode</label>
+                      <select
+                        value={globalMarkupType}
+                        onChange={(e) => setGlobalMarkupType(e.target.value as any)}
+                        className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                      >
+                        <option value="PERCENTAGE">Percentage Markup (%)</option>
+                        <option value="FLAT_FEE">Flat NGN Fee Added (₦)</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">EUR Rate (₦)</label>
-                    <input
-                      type="number"
-                      required
-                      value={eurRate}
-                      onChange={(e) => setEurRate(e.target.value)}
-                      className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
-                      placeholder="e.g. 1640"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Global Markup (%)</label>
-                    <input
-                      type="number"
-                      required
-                      value={globalMarkup}
-                      onChange={(e) => setGlobalMarkup(e.target.value)}
-                      className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
-                      placeholder="e.g. 50"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" variant="primary" size="sm" className="flex-1" disabled={updateGlobalPricing.isPending}>
-                      {updateGlobalPricing.isPending ? 'Saving...' : 'Save Settings'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditingGlobals(false)}
-                    >
-                      Cancel
-                    </Button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {globalMarkupType === 'PERCENTAGE' ? (
+                      <div>
+                        <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Global Markup Percentage (%)</label>
+                        <input
+                          type="number"
+                          required
+                          value={globalMarkup}
+                          onChange={(e) => setGlobalMarkup(e.target.value)}
+                          className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                          placeholder="e.g. 50"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Global Flat Fee Added (₦)</label>
+                        <input
+                          type="number"
+                          required
+                          value={globalFlatFee}
+                          onChange={(e) => setGlobalFlatFee(e.target.value)}
+                          className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                          placeholder="e.g. 5000"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 items-end">
+                      <Button type="submit" variant="primary" size="sm" className="flex-1 h-9" disabled={updateGlobalPricing.isPending}>
+                        {updateGlobalPricing.isPending ? 'Saving...' : 'Save Global Settings'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-9"
+                        onClick={() => setIsEditingGlobals(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </CardContent>
@@ -359,11 +408,11 @@ export default function DomainsPage() {
                     <thead>
                       <tr className="border-b border-border text-muted-foreground font-medium uppercase tracking-wider text-xs">
                         <th className="pb-3 pr-4 font-bold">Extension</th>
-                        <th className="pb-3 pr-4 font-bold">Wholesale Price (Base)</th>
+                        <th className="pb-3 pr-4 font-bold">Wholesale Base</th>
                         <th className="pb-3 pr-4 font-bold">Wholesale Cost (Naira)</th>
-                        <th className="pb-3 pr-4 font-bold">Markup Margin</th>
-                        <th className="pb-3 pr-4 font-bold">Override Pricing</th>
-                        <th className="pb-3 pr-4 font-bold text-right">Final Price (Naira)</th>
+                        <th className="pb-3 pr-4 font-bold">Pricing Config</th>
+                        <th className="pb-3 pr-4 font-bold">Net Margin (P&L)</th>
+                        <th className="pb-3 pr-4 font-bold text-right">Final Selling Price</th>
                         <th className="pb-3 font-bold text-right">Actions</th>
                       </tr>
                     </thead>
@@ -384,22 +433,26 @@ export default function DomainsPage() {
                             ₦{extItem.wholesaleInNgn.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </td>
                           <td className="py-4 pr-4 text-foreground">
-                            {extItem.customPrice !== null ? (
-                              <span className="text-muted-foreground italic">Overridden</span>
+                            {extItem.markupType === 'CUSTOM_PRICE' ? (
+                              <Badge variant="info">₦{extItem.customPrice?.toLocaleString()} Fixed</Badge>
+                            ) : extItem.markupType === 'FLAT_FEE' ? (
+                              <Badge variant="default">+₦{extItem.flatFee?.toLocaleString()} Fee</Badge>
                             ) : (
                               <Badge variant={extItem.isOverridden ? 'info' : 'default'}>
-                                {extItem.markupPercentage}% {extItem.isOverridden && 'Override'}
+                                +{extItem.markupPercentage}% Markup
                               </Badge>
                             )}
                           </td>
                           <td className="py-4 pr-4">
-                            {extItem.customPrice !== null ? (
-                              <Badge variant="success">
-                                ₦{extItem.customPrice.toLocaleString()} Fixed
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 text-xs font-bold font-mono border ${
+                                extItem.isLoss
+                                  ? 'bg-red-50 text-red-700 border-red-200'
+                                  : 'bg-green-50 text-green-700 border-green-200'
+                              }`}
+                            >
+                              {extItem.isLoss ? '' : '+'}₦{extItem.netProfit.toLocaleString()} ({extItem.profitMarginPercent.toFixed(1)}%)
+                            </span>
                           </td>
                           <td className="py-4 pr-4 text-right font-bold text-primary font-mono text-base">
                             ₦{extItem.finalRetailPrice.toLocaleString()}
@@ -553,34 +606,45 @@ export default function DomainsPage() {
 
             <form onSubmit={handleSaveExtension} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase">Configuration Type</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase">Configuration Pricing Type</label>
+                <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
-                    onClick={() => setUseFlatPrice(false)}
-                    className={`py-2 px-3 text-xs font-semibold border border-border transition-colors cursor-pointer ${
-                      !useFlatPrice
+                    onClick={() => setTldMarkupType('PERCENTAGE')}
+                    className={`py-2 px-1 text-center text-xs font-semibold border border-border transition-colors cursor-pointer ${
+                      tldMarkupType === 'PERCENTAGE'
                         ? 'bg-[#e8900a] text-white border-[#e8900a]'
                         : 'bg-background text-muted-foreground hover:bg-muted/50'
                     }`}
                   >
-                    Custom Markup %
+                    Markup %
                   </button>
                   <button
                     type="button"
-                    onClick={() => setUseFlatPrice(true)}
-                    className={`py-2 px-3 text-xs font-semibold border border-border transition-colors cursor-pointer ${
-                      useFlatPrice
+                    onClick={() => setTldMarkupType('FLAT_FEE')}
+                    className={`py-2 px-1 text-center text-xs font-semibold border border-border transition-colors cursor-pointer ${
+                      tldMarkupType === 'FLAT_FEE'
                         ? 'bg-[#e8900a] text-white border-[#e8900a]'
                         : 'bg-background text-muted-foreground hover:bg-muted/50'
                     }`}
                   >
-                    Custom Flat Naira Price
+                    Flat Fee (₦)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTldMarkupType('CUSTOM_PRICE')}
+                    className={`py-2 px-1 text-center text-xs font-semibold border border-border transition-colors cursor-pointer ${
+                      tldMarkupType === 'CUSTOM_PRICE'
+                        ? 'bg-[#e8900a] text-white border-[#e8900a]'
+                        : 'bg-background text-muted-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    Fixed Price (₦)
                   </button>
                 </div>
               </div>
 
-              {!useFlatPrice ? (
+              {tldMarkupType === 'PERCENTAGE' && (
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Markup Percentage (%)</label>
                   <input
@@ -589,16 +653,34 @@ export default function DomainsPage() {
                     value={tldMarkup}
                     onChange={(e) => setTldMarkup(e.target.value)}
                     className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
-                    placeholder="e.g. 40"
-                    min="0"
+                    placeholder="e.g. 50"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
                     Adds this percentage profit on top of the live converted exchange rate price.
                   </p>
                 </div>
-              ) : (
+              )}
+
+              {tldMarkupType === 'FLAT_FEE' && (
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Fixed Naira Price (₦)</label>
+                  <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Flat NGN Fee Added (₦)</label>
+                  <input
+                    type="number"
+                    required
+                    value={tldFlatFee}
+                    onChange={(e) => setTldFlatFee(e.target.value)}
+                    className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                    placeholder="e.g. 5000"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Adds a fixed fee in Naira to the converted wholesale cost.
+                  </p>
+                </div>
+              )}
+
+              {tldMarkupType === 'CUSTOM_PRICE' && (
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Fixed Naira Selling Price (₦)</label>
                   <input
                     type="number"
                     required
@@ -609,7 +691,7 @@ export default function DomainsPage() {
                     min="0"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Sets a fixed final NGN retail price for this extension, ignoring live cost fluctuations.
+                    Sets a fixed final NGN retail price for this extension, ignoring cost fluctuations.
                   </p>
                 </div>
               )}

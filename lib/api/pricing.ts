@@ -3,7 +3,9 @@ import { api } from './client';
 export interface GlobalPricingSettings {
   usdToNgn: number;
   eurToNgn: number;
+  globalMarkupType: 'PERCENTAGE' | 'FLAT_FEE';
   globalMarkup: number;
+  globalFlatFee: number;
 }
 
 export interface DomainPricingItem {
@@ -11,9 +13,14 @@ export interface DomainPricingItem {
   wholesalePrice: number;
   wholesaleCurrency: string;
   wholesaleInNgn: number;
+  markupType: 'PERCENTAGE' | 'FLAT_FEE' | 'CUSTOM_PRICE';
   markupPercentage: number;
+  flatFee: number | null;
   customPrice: number | null;
   finalRetailPrice: number;
+  netProfit: number;
+  profitMarginPercent: number;
+  isLoss: boolean;
   isOverridden: boolean;
 }
 
@@ -48,7 +55,9 @@ export async function getDomainPricingApi(): Promise<DomainPricingResponse> {
 export async function updateGlobalPricingApi(data: {
   usdToNgn?: number;
   eurToNgn?: number;
+  globalMarkupType?: 'PERCENTAGE' | 'FLAT_FEE';
   globalMarkup?: number;
+  globalFlatFee?: number;
 }): Promise<void> {
   return api<void>('/admin/domain-pricing/settings', {
     method: 'POST',
@@ -58,7 +67,9 @@ export async function updateGlobalPricingApi(data: {
 
 export async function updateExtensionPricingApi(data: {
   extension: string;
+  markupType?: 'PERCENTAGE' | 'FLAT_FEE' | 'CUSTOM_PRICE';
   markupPercentage?: number;
+  flatFee?: number | null;
   customPrice?: number | null;
 }): Promise<void> {
   return api<void>('/admin/domain-pricing/extensions', {
