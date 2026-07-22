@@ -3,16 +3,37 @@
 import { useWhmcsSyncGaps, useSyncWhmcsUser } from '@/lib/hooks/useWhmcsSyncGaps';
 import { useReconcileOrder } from '@/lib/hooks/useOrders';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RefreshCw } from 'lucide-react';
 
 export default function WhmcsSyncPage() {
-  const { data, isLoading, error } = useWhmcsSyncGaps();
+  const { data, isLoading, error, refetch, isFetching } = useWhmcsSyncGaps();
   const syncUser = useSyncWhmcsUser();
   const reconcile = useReconcileOrder();
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">WHMCS Sync</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">WHMCS Sync</h1>
+          <p className="text-sm text-muted-foreground">
+            View and reconcile unsynced users and orders with WHMCS.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading || isFetching}
+          >
+            <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
+            Refresh
+          </Button>
+        </div>
+      </div>
 
       {isLoading && <p className="text-muted-foreground">Loading sync gaps...</p>}
       {error && <p className="text-destructive">Failed to load WHMCS sync data.</p>}
