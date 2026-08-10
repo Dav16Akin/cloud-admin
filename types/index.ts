@@ -115,3 +115,46 @@ export interface UserActivityDetail {
   };
 }
 
+export interface TicketReply {
+  replyid?: number;
+  userid?: number;
+  contactid?: number;
+  name?: string;
+  email?: string;
+  date?: string;
+  message?: string;
+  admin?: string;
+  status?: string;
+}
+
+export interface SupportTicket {
+  id: number | string;
+  ticketNumber?: string;
+  tid?: string;
+  c?: string;
+  deptid?: number;
+  departmentId?: number;
+  deptname?: string;
+  departmentName?: string;
+  userid?: number;
+  name?: string;
+  email?: string;
+  clientName?: string;
+  clientEmail?: string;
+  subject: string;
+  status: string;
+  priority: string;
+  date: string;
+  lastreply?: string;
+  lastReply?: string;
+  replies?: TicketReply[];
+}
+
+export interface SupportTicketsResponse {
+  tickets: SupportTicket[];
+  totalResults: number;
+  page: number;
+  limit: number;
+}
+
+

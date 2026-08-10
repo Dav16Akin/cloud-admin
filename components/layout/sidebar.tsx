@@ -12,6 +12,7 @@ import {
   Server,
   RefreshCw,
   TrendingUp,
+  LifeBuoy,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -24,7 +25,9 @@ const navItems = [
   { href: '/profit-loss', label: 'Profit & Loss', icon: TrendingUp },
   { href: '/hosting', label: 'Hosting', icon: Server },
   { href: '/whmcs-sync', label: 'WHMCS Sync', icon: RefreshCw },
+  { href: '/support', label: 'Support Tickets', icon: LifeBuoy },
 ];
+
 
 export function Sidebar() {
   const pathname = usePathname();
