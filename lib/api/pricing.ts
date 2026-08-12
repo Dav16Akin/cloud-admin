@@ -13,11 +13,15 @@ export interface DomainPricingItem {
   wholesalePrice: number;
   wholesaleCurrency: string;
   wholesaleInNgn: number;
+  wholesaleRenewPrice?: number;
+  wholesaleRenewInNgn?: number;
   markupType: 'PERCENTAGE' | 'FLAT_FEE' | 'CUSTOM_PRICE';
   markupPercentage: number;
   flatFee: number | null;
   customPrice: number | null;
+  renewalCustomPrice: number | null;
   finalRetailPrice: number;
+  finalRetailRenewPrice: number;
   netProfit: number;
   profitMarginPercent: number;
   isLoss: boolean;
@@ -71,6 +75,7 @@ export async function updateExtensionPricingApi(data: {
   markupPercentage?: number;
   flatFee?: number | null;
   customPrice?: number | null;
+  renewalCustomPrice?: number | null;
 }): Promise<void> {
   return api<void>('/admin/domain-pricing/extensions', {
     method: 'POST',

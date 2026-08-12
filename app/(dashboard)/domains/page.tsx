@@ -54,6 +54,7 @@ export default function DomainsPage() {
   const [tldMarkup, setTldMarkup] = useState('');
   const [tldFlatFee, setTldFlatFee] = useState('');
   const [tldCustomPrice, setTldCustomPrice] = useState('');
+  const [tldRenewalPrice, setTldRenewalPrice] = useState('');
 
   // Simple Notification banner state
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -99,6 +100,7 @@ export default function DomainsPage() {
     setTldMarkup(String(extItem.markupPercentage));
     setTldFlatFee(extItem.flatFee !== null ? String(extItem.flatFee) : '');
     setTldCustomPrice(extItem.customPrice !== null ? String(extItem.customPrice) : '');
+    setTldRenewalPrice(extItem.renewalCustomPrice !== null && extItem.renewalCustomPrice !== undefined ? String(extItem.renewalCustomPrice) : '');
   };
 
   const handleSaveExtension = async (e: React.FormEvent) => {
@@ -112,6 +114,7 @@ export default function DomainsPage() {
         markupPercentage: tldMarkupType === 'PERCENTAGE' ? parseFloat(tldMarkup) : undefined,
         flatFee: tldMarkupType === 'FLAT_FEE' ? parseFloat(tldFlatFee) : null,
         customPrice: tldMarkupType === 'CUSTOM_PRICE' ? parseFloat(tldCustomPrice) : null,
+        renewalCustomPrice: tldRenewalPrice.trim() !== '' ? parseFloat(tldRenewalPrice) : null,
       });
       setSelectedExtension(null);
       showToast(`Pricing override updated for .${selectedExtension}`, 'success');
@@ -412,7 +415,8 @@ export default function DomainsPage() {
                         <th className="pb-3 pr-4 font-bold">Wholesale Cost (Naira)</th>
                         <th className="pb-3 pr-4 font-bold">Pricing Config</th>
                         <th className="pb-3 pr-4 font-bold">Net Margin (P&L)</th>
-                        <th className="pb-3 pr-4 font-bold text-right">Final Selling Price</th>
+                        <th className="pb-3 pr-4 font-bold text-right">1st Year Price</th>
+                        <th className="pb-3 pr-4 font-bold text-right">Renewal Price</th>
                         <th className="pb-3 font-bold text-right">Actions</th>
                       </tr>
                     </thead>
@@ -454,8 +458,14 @@ export default function DomainsPage() {
                               {extItem.isLoss ? '' : '+'}₦{extItem.netProfit.toLocaleString()} ({extItem.profitMarginPercent.toFixed(1)}%)
                             </span>
                           </td>
-                          <td className="py-4 pr-4 text-right font-bold text-primary font-mono text-base">
+                          <td className="py-4 pr-4 text-right font-bold text-primary font-mono text-sm">
                             ₦{extItem.finalRetailPrice.toLocaleString()}
+                          </td>
+                          <td className="py-4 pr-4 text-right font-bold text-amber-600 font-mono text-sm">
+                            ₦{extItem.finalRetailRenewPrice.toLocaleString()}
+                            {extItem.renewalCustomPrice !== null && (
+                              <span className="block text-[10px] text-muted-foreground font-sans font-normal">Fixed</span>
+                            )}
                           </td>
                           <td className="py-4 text-right">
                             <div className="flex justify-end items-center gap-1.5">
@@ -680,7 +690,7 @@ export default function DomainsPage() {
 
               {tldMarkupType === 'CUSTOM_PRICE' && (
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Fixed Naira Selling Price (₦)</label>
+                  <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">Fixed 1st Year Selling Price (₦)</label>
                   <input
                     type="number"
                     required
@@ -691,10 +701,27 @@ export default function DomainsPage() {
                     min="0"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Sets a fixed final NGN retail price for this extension, ignoring cost fluctuations.
+                    Sets a fixed final NGN retail price for first year buy.
                   </p>
                 </div>
               )}
+
+              <div className="pt-2 border-t border-border mt-3">
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase">
+                  Custom Fixed Renewal Price (₦) <span className="text-[10px] font-normal text-muted-foreground">(Optional)</span>
+                </label>
+                <input
+                  type="number"
+                  value={tldRenewalPrice}
+                  onChange={(e) => setTldRenewalPrice(e.target.value)}
+                  className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                  placeholder="Leave blank to use calculated renewal rate"
+                  min="0"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Set a fixed yearly renewal price in Naira for this extension.
+                </p>
+              </div>
 
               <div className="flex gap-2 pt-4 border-t border-border mt-6">
                 <Button
