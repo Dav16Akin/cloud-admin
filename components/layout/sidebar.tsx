@@ -15,6 +15,7 @@ import {
   LifeBuoy,
   ChevronLeft,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/plans', label: 'Plans', icon: LayoutDashboard },
   { href: '/domains', label: 'Domains', icon: Globe },
+  { href: '/ssl', label: 'SSL', icon: Shield },
   { href: '/profit-loss', label: 'Profit & Loss', icon: TrendingUp },
   { href: '/hosting', label: 'Hosting', icon: Server },
   { href: '/whmcs-sync', label: 'WHMCS Sync', icon: RefreshCw },

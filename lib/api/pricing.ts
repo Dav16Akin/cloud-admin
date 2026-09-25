@@ -92,3 +92,53 @@ export async function deleteExtensionPricingApi(extension: string): Promise<void
 export async function getAdminDomainsApi(): Promise<AdminDomain[]> {
   return api<AdminDomain[]>('/admin/domains');
 }
+
+// ─── SSL Pricing ─────────────────────────────────────────────────────────────
+
+export interface SSLPricingItem {
+  productId: number;
+  name: string;
+  category: string;
+  validationMethod: string;
+  wholesalePrice: number | null;
+  wholesaleCurrency: string | null;
+  wholesaleInNgn: number | null;
+  markupType: 'PERCENTAGE' | 'FLAT_FEE' | 'CUSTOM_PRICE';
+  markupPercentage: number;
+  flatFee: number | null;
+  customPrice: number | null;
+  finalRetailPrice: number | null;
+  netProfit: number | null;
+  profitMarginPercent: number | null;
+  isLoss: boolean;
+  isOverridden: boolean;
+}
+
+export interface SSLPricingResponse {
+  globalSettings: GlobalPricingSettings;
+  products: SSLPricingItem[];
+}
+
+export async function getSSLPricingApi(): Promise<SSLPricingResponse> {
+  return api<SSLPricingResponse>('/admin/ssl-pricing');
+}
+
+export async function updateSSLProductOverrideApi(data: {
+  productId: number;
+  productName: string;
+  markupType?: 'PERCENTAGE' | 'FLAT_FEE' | 'CUSTOM_PRICE';
+  markupPercentage?: number;
+  flatFee?: number | null;
+  customPrice?: number | null;
+}): Promise<void> {
+  return api<void>('/admin/ssl-pricing/overrides', {
+    method: 'POST',
+    body: data,
+  });
+}
+
+export async function deleteSSLProductOverrideApi(productId: number): Promise<void> {
+  return api<void>(`/admin/ssl-pricing/overrides/${productId}`, {
+    method: 'DELETE',
+  });
+}

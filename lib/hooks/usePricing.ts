@@ -7,6 +7,9 @@ import {
   updateExtensionPricingApi,
   deleteExtensionPricingApi,
   getAdminDomainsApi,
+  getSSLPricingApi,
+  updateSSLProductOverrideApi,
+  deleteSSLProductOverrideApi,
 } from '@/lib/api/pricing';
 
 const PRICING_KEY = ['domain-pricing'] as const;
@@ -56,5 +59,38 @@ export function useAdminDomains() {
   return useQuery({
     queryKey: DOMAINS_KEY,
     queryFn: getAdminDomainsApi,
+  });
+}
+
+// ─── SSL Pricing hooks ───────────────────────────────────────────────────────────
+
+const SSL_PRICING_KEY = ['ssl-pricing'] as const;
+
+export function useSSLPricing() {
+  return useQuery({
+    queryKey: SSL_PRICING_KEY,
+    queryFn: getSSLPricingApi,
+  });
+}
+
+export function useUpdateSSLProductOverride() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateSSLProductOverrideApi,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SSL_PRICING_KEY });
+    },
+  });
+}
+
+export function useDeleteSSLProductOverride() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteSSLProductOverrideApi,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SSL_PRICING_KEY });
+    },
   });
 }
