@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useOrders, useReconcileOrder } from '@/lib/hooks/useOrders';
 import { useUsers } from '@/lib/hooks/useUsers';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RefreshCw, Check, AlertCircle } from 'lucide-react';
 import type { OrderStatus } from '@/types';
 
 const statusVariant: Record<OrderStatus, 'success' | 'warning' | 'danger' | 'info' | 'default' | 'green'> = {
@@ -17,9 +19,27 @@ const statusVariant: Record<OrderStatus, 'success' | 'warning' | 'danger' | 'inf
 };
 
 export default function OrdersPage() {
-  const { data: orders, isLoading, error } = useOrders();
+  const { data: orders, isLoading, error, refetch, isFetching } = useOrders();
   const { data: users, isLoading: isUsersLoading } = useUsers();
   const reconcile = useReconcileOrder();
+
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4500);
+  };
+
+  const handleReconcileOrder = async (orderId: string) => {
+    try {
+      await reconcile.mutateAsync(orderId);
+      showToast(`Order ${orderId.slice(0, 8)}... reconciled successfully`, 'success');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to reconcile order', 'error');
+    }
+  };
 
   const [showAmount, setShowAmount] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -68,8 +88,45 @@ export default function OrdersPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Orders</h1>
+    <div className="relative">
+      {/* Toast Notification Banner */}
+      {notification && (
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border shadow-lg transition-all duration-300 ${
+            notification.type === 'success'
+              ? 'bg-[#fff8ee] border-[#e8900a]/20 text-[#031033]'
+              : 'bg-destructive/10 border-destructive/20 text-destructive'
+          }`}
+        >
+          {notification.type === 'success' ? (
+            <Check size={18} className="text-[#e8900a]" />
+          ) : (
+            <AlertCircle size={18} />
+          )}
+          <span className="text-sm font-medium">{notification.message}</span>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Orders</h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              await refetch();
+              showToast('Orders refreshed', 'success');
+            }}
+            disabled={isLoading || isFetching}
+          >
+            <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
+            Refresh
+          </Button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
@@ -161,39 +218,42 @@ export default function OrdersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((order) => (
-                    <tr key={order.id} className="border-b border-border last:border-0">
-                      <td className="py-3 pr-4 font-mono text-xs text-foreground">
-                        {order.id.slice(0, 8)}...
-                      </td>
-                      <td className="py-3 pr-4 text-foreground">
-                        {getUserName(order.userId)}
-                      </td>
-                      <td className="py-3 pr-4 text-foreground font-medium">
-                        {formatAmount(order.amount)}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <Badge variant={statusVariant[order.status]}>{order.status}</Badge>
-                      </td>
-                      <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">
-                        {order.whmcsInvoiceId ?? '—'}
-                      </td>
-                      <td className="py-3 pr-4 text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="py-3">
-                        {!order.whmcsInvoiceId && (
-                          <button
-                            onClick={() => reconcile.mutate(order.id)}
-                            disabled={reconcile.isPending}
-                            className="btn-navy btn-sm text-xs"
-                          >
-                            {reconcile.isPending ? '...' : 'Reconcile'}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {[...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((order) => {
+                    const isOrderPending = reconcile.isPending && reconcile.variables === order.id;
+                    return (
+                      <tr key={order.id} className="border-b border-border last:border-0">
+                        <td className="py-3 pr-4 font-mono text-xs text-foreground">
+                          {order.id.slice(0, 8)}...
+                        </td>
+                        <td className="py-3 pr-4 text-foreground">
+                          {getUserName(order.userId)}
+                        </td>
+                        <td className="py-3 pr-4 text-foreground font-medium">
+                          {formatAmount(order.amount)}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <Badge variant={statusVariant[order.status]}>{order.status}</Badge>
+                        </td>
+                        <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">
+                          {order.whmcsInvoiceId ?? '—'}
+                        </td>
+                        <td className="py-3 pr-4 text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-3">
+                          {!order.whmcsInvoiceId && (
+                            <button
+                              onClick={() => handleReconcileOrder(order.id)}
+                              disabled={reconcile.isPending}
+                              className="btn-navy btn-sm text-xs"
+                            >
+                              {isOrderPending ? '...' : 'Reconcile'}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
