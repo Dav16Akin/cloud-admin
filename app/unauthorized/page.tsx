@@ -7,7 +7,7 @@ export default function UnauthorizedPage() {
   const logout = useAuthStore((s) => s.logout);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4">
       <div className="w-full max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center border-2 border-destructive bg-destructive/5">

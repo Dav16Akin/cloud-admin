@@ -10,6 +10,7 @@ import {
   useUpdatePlan,
   useDeletePlan,
 } from '@/lib/hooks/usePlans';
+import { RowDetailDrawer } from '@/components/ui/row-detail-drawer';
 import {
   LayoutDashboard,
   Plus,
@@ -25,6 +26,7 @@ import {
   X,
   AlertCircle,
   Check,
+  Code,
 } from 'lucide-react';
 
 export default function PlansPage() {
@@ -32,6 +34,9 @@ export default function PlansPage() {
   const createPlan = useCreatePlan();
   const updatePlan = useUpdatePlan();
   const deletePlan = useDeletePlan();
+
+  // Row Inspection state
+  const [inspectedPlan, setInspectedPlan] = useState<any | null>(null);
 
   // Modal / Form States
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
@@ -204,73 +209,74 @@ export default function PlansPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map((plan) => (
-            <Card
+            <div
               key={plan.id}
-              className={`relative flex flex-col border-t-4 transition-all duration-200 ${
-                plan.isPopular ? 'border-t-[#e8900a] shadow-md' : 'border-t-[#031033]'
-              } ${!plan.isActive && 'opacity-65'}`}
+              className={`relative flex flex-col rounded-xl border bg-white shadow-xs transition-all duration-200 border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-md ${
+                plan.isPopular ? 'border-t-2 border-t-amber-500' : 'border-t-2 border-t-sky-500'
+              } ${!plan.isActive ? 'opacity-60' : ''}`}
             >
-              <CardHeader className="pb-3">
+              <div className="p-5 pb-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
+                    <h3 className="text-base font-bold text-[#0f172a]">{plan.name}</h3>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                       <Badge variant={plan.isActive ? 'success' : 'danger'}>
+                        <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
                         {plan.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                       {plan.isPopular && (
-                        <Badge variant="warning" className="text-[#031033] bg-[#e8900a]/15 border-[#e8900a]/30">
+                        <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                           Popular
-                        </Badge>
+                        </span>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-2xl font-black text-primary font-mono">
+                    <span className="text-2xl font-black text-[#0f172a] font-mono">
                       ₦{plan.price.toLocaleString()}
                     </span>
-                    <span className="text-xs text-muted-foreground block">/ {plan.billingCycle}</span>
+                    <span className="text-[11px] text-[#64748b] block font-mono">/ {plan.billingCycle}</span>
                   </div>
                 </div>
-              </CardHeader>
+              </div>
 
-              <CardContent className="flex-1 flex flex-col pt-3 border-t border-border">
+              <div className="flex-1 flex flex-col p-5 pt-3 border-t border-[#e2e8f0]">
                 {/* Secondary Pricing (Monthly/Quarterly) */}
-                <div className="grid grid-cols-2 gap-2 text-xs bg-muted/30 p-2.5 mb-4 border border-border">
+                <div className="grid grid-cols-2 gap-2 text-xs bg-[#f8fafc] p-2.5 mb-4 border border-[#e2e8f0] rounded-lg">
                   <div>
-                    <span className="text-muted-foreground block text-[10px] uppercase font-bold">Monthly Price</span>
-                    <span className="font-semibold font-mono text-foreground">
+                    <span className="text-[#64748b] block text-[10px] uppercase font-semibold">Monthly Price</span>
+                    <span className="font-semibold font-mono text-[#0f172a] text-xs">
                       {plan.monthlyPrice !== null ? `₦${plan.monthlyPrice.toLocaleString()}` : '—'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground block text-[10px] uppercase font-bold">Quarterly Price</span>
-                    <span className="font-semibold font-mono text-foreground">
+                    <span className="text-[#64748b] block text-[10px] uppercase font-semibold">Quarterly Price</span>
+                    <span className="font-semibold font-mono text-[#0f172a] text-xs">
                       {plan.quarterlyPrice !== null ? `₦${plan.quarterlyPrice.toLocaleString()}` : '—'}
                     </span>
                   </div>
                 </div>
 
                 {/* Resource Limits List */}
-                <div className="space-y-2 mb-6 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <HardDrive size={15} className="text-primary/70" />
-                    <span className="font-medium text-foreground">{plan.storage}</span> SSD Storage
+                <div className="space-y-2 mb-6 text-xs">
+                  <div className="flex items-center gap-2 text-[#64748b]">
+                    <HardDrive size={14} className="text-sky-600" />
+                    <span className="font-medium text-[#0f172a]">{plan.storage}</span> SSD Storage
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Activity size={15} className="text-primary/70" />
-                    <span className="font-medium text-foreground">{plan.bandwidth}</span> Bandwidth
+                  <div className="flex items-center gap-2 text-[#64748b]">
+                    <Activity size={14} className="text-sky-600" />
+                    <span className="font-medium text-[#0f172a]">{plan.bandwidth}</span> Bandwidth
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Globe size={15} className="text-primary/70" />
-                    <span className="font-medium text-foreground">
+                  <div className="flex items-center gap-2 text-[#64748b]">
+                    <Globe size={14} className="text-sky-600" />
+                    <span className="font-medium text-[#0f172a]">
                       {plan.websites >= 999 ? 'Unlimited' : plan.websites}
                     </span>{' '}
                     Websites
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail size={15} className="text-primary/70" />
-                    <span className="font-medium text-foreground">
+                  <div className="flex items-center gap-2 text-[#64748b]">
+                    <Mail size={14} className="text-sky-600" />
+                    <span className="font-medium text-[#0f172a]">
                       {plan.emails >= 999 ? 'Unlimited' : plan.emails}
                     </span>{' '}
                     Emails
@@ -279,12 +285,12 @@ export default function PlansPage() {
 
                 {/* Plan Features */}
                 {plan.features && plan.features.length > 0 && (
-                  <div className="border-t border-border pt-3 mb-6 flex-1">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">
+                  <div className="border-t border-[#e2e8f0] pt-3 mb-6 flex-1">
+                    <span className="text-[10px] font-semibold text-[#64748b] uppercase tracking-wider block mb-2">
                       Included Features
                     </span>
-                    <ul className="space-y-1.5 text-xs text-muted-foreground">
-                      {plan.features.map((feature, idx) => (
+                    <ul className="space-y-1.5 text-xs text-[#64748b]">
+                      {plan.features.map((feature: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-1.5">
                           <Check size={12} className="text-emerald-600 mt-0.5 shrink-0" />
                           <span>{feature}</span>
@@ -295,27 +301,35 @@ export default function PlansPage() {
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2 pt-3 border-t border-border mt-auto">
-                  <Button
-                    onClick={() => handleOpenEditModal(plan)}
-                    variant="outline-navy"
-                    size="sm"
-                    className="flex-1 text-xs font-semibold py-1.5 h-8"
+                <div className="flex items-center gap-2 pt-3 border-t border-[#e2e8f0] mt-auto">
+                  <button
+                    type="button"
+                    onClick={() => setInspectedPlan(plan)}
+                    className="h-8 px-2.5 rounded-lg bg-white hover:bg-slate-50 text-[#0f172a] border border-[#cbd5e1] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium"
+                    title="Inspect API response"
                   >
-                    <Edit3 size={12} />
-                    Configure Details
-                  </Button>
-                  <Button
+                    <Code size={13} className="text-sky-600" />
+                    <span className="hidden sm:inline">Inspect</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEditModal(plan)}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 h-8 text-xs font-semibold rounded-lg bg-[#0f172a] hover:bg-[#1e293b] text-white border border-[#0f172a] transition-colors cursor-pointer"
+                  >
+                    <Edit3 size={12} className="text-sky-400" />
+                    <span>Configure Details</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleDeletePlan(plan)}
-                    variant="outline"
-                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-white hover:bg-rose-50 text-[#64748b] hover:text-rose-600 border border-[#e2e8f0] hover:border-rose-200 transition-colors cursor-pointer"
                     title="Deactivate/Delete plan"
                   >
                     <Trash2 size={13} />
-                  </Button>
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -325,25 +339,25 @@ export default function PlansPage() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-[#031033]/40 backdrop-blur-xs z-40 transition-opacity duration-300 opacity-100"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-40 transition-opacity"
             onClick={() => setIsModalOpen(false)}
           />
 
           {/* Modal Panel */}
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-xl bg-card border border-border shadow-2xl z-50 p-6 flex flex-col max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
-              <h3 className="text-lg font-bold text-foreground">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-xl bg-white border border-[#e2e8f0] rounded-xl shadow-2xl z-50 p-6 flex flex-col max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3 mb-4">
+              <h3 className="text-base font-bold text-[#0f172a]">
                 {isEditing ? 'Configure Package Details' : 'Create Hosting Package'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="p-1 rounded-md hover:bg-slate-100 text-[#64748b] hover:text-[#0f172a] transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               {/* Row 1: Name & Billing Cycle */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -500,7 +514,7 @@ export default function PlansPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-4 border-t border-border mt-6">
+              <div className="flex gap-2 pt-4 border-t border-[#e2e8f0] mt-6">
                 <Button
                   type="submit"
                   variant="primary"
@@ -509,18 +523,47 @@ export default function PlansPage() {
                 >
                   {createPlan.isPending || updatePlan.isPending ? 'Processing...' : 'Save Package'}
                 </Button>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
                   onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-white hover:bg-slate-50 text-[#0f172a] border border-[#cbd5e1] transition-colors cursor-pointer"
                 >
                   Cancel
-                </Button>
+                </button>
               </div>
             </form>
           </div>
         </>
       )}
+
+      {/* Row Inspector Drawer */}
+      <RowDetailDrawer
+        isOpen={!!inspectedPlan}
+        onClose={() => setInspectedPlan(null)}
+        title={inspectedPlan?.name || 'Hosting Plan'}
+        subtitle={`₦${inspectedPlan?.price?.toLocaleString() || 0} / ${inspectedPlan?.billingCycle || 'yearly'}`}
+        entityType="HOSTING PLAN"
+        data={inspectedPlan}
+        status={inspectedPlan?.isActive ? 'ACTIVE' : 'INACTIVE'}
+        statusVariant={inspectedPlan?.isActive ? 'success' : 'danger'}
+        overviewFields={
+          inspectedPlan
+            ? [
+                { label: 'Plan Name', value: inspectedPlan.name },
+                { label: 'Base Price', value: `₦${Number(inspectedPlan.price).toLocaleString()}`, mono: true },
+                { label: 'Billing Cycle', value: inspectedPlan.billingCycle },
+                { label: 'Monthly Price', value: inspectedPlan.monthlyPrice ? `₦${Number(inspectedPlan.monthlyPrice).toLocaleString()}` : '—', mono: true },
+                { label: 'Quarterly Price', value: inspectedPlan.quarterlyPrice ? `₦${Number(inspectedPlan.quarterlyPrice).toLocaleString()}` : '—', mono: true },
+                { label: 'SSD Storage', value: inspectedPlan.storage },
+                { label: 'Bandwidth', value: inspectedPlan.bandwidth },
+                { label: 'Websites Allowed', value: inspectedPlan.websites >= 999 ? 'Unlimited' : inspectedPlan.websites, mono: true },
+                { label: 'Emails Allowed', value: inspectedPlan.emails >= 999 ? 'Unlimited' : inspectedPlan.emails, mono: true },
+                { label: 'Popular Highlight', value: inspectedPlan.isPopular ? 'Yes' : 'No' },
+                { label: 'Active Status', value: inspectedPlan.isActive ? 'Active' : 'Inactive' },
+              ]
+            : undefined
+        }
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { RowDetailDrawer } from '@/components/ui/row-detail-drawer';
 import {
   useSSLPricing,
   useUpdateSSLProductOverride,
@@ -22,6 +23,8 @@ import {
   AlertCircle,
   Trash2,
   Lock,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
 
 export default function SSLPage() {
@@ -30,6 +33,8 @@ export default function SSLPage() {
     isLoading,
     refetch,
   } = useSSLPricing();
+
+  const [inspectedProduct, setInspectedProduct] = useState<any | null>(null);
 
   const updateOverride = useUpdateSSLProductOverride();
   const deleteOverride = useDeleteSSLProductOverride();
@@ -115,16 +120,16 @@ export default function SSLPage() {
       {/* Toast Notification Banner */}
       {notification && (
         <div
-          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border shadow-lg transition-all duration-300 ${
+          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border shadow-lg rounded-xl transition-all duration-300 ${
             notification.type === 'success'
-              ? 'bg-[#fff8ee] border-[#e8900a]/20 text-[#031033]'
-              : 'bg-destructive/10 border-destructive/20 text-destructive'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}
         >
           {notification.type === 'success' ? (
-            <Check size={18} className="text-[#e8900a]" />
+            <Check size={18} className="text-emerald-600" />
           ) : (
-            <AlertCircle size={18} />
+            <AlertCircle size={18} className="text-rose-600" />
           )}
           <span className="text-sm font-medium">{notification.message}</span>
         </div>
@@ -133,11 +138,11 @@ export default function SSLPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Shield size={22} className="text-primary" />
+          <h1 className="text-2xl font-bold tracking-tight text-[#0f172a] flex items-center gap-2">
+            <Shield size={22} className="text-sky-600" />
             SSL Certificates
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[#64748b]">
             Configure pricing margins for SSL certificate products. Overrides apply
             per-product; all others use the shared global markup.
           </p>
@@ -289,31 +294,32 @@ export default function SSLPage() {
                   {products.map((item) => (
                     <tr
                       key={item.productId}
-                      className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                      onClick={() => setInspectedProduct(item)}
+                      className="border-b border-[#e2e8f0] last:border-0 hover:bg-[#f8fafc] transition-colors cursor-pointer group"
                     >
                       <td className="py-4 pr-4">
-                        <div className="font-bold text-foreground flex items-center gap-1.5">
-                          <Shield size={13} className="text-primary shrink-0" />
+                        <div className="font-bold text-[#0f172a] group-hover:text-emerald-600 transition-colors flex items-center gap-1.5">
+                          <Shield size={13} className="text-emerald-600 shrink-0" />
                           <span className="leading-tight">{item.name}</span>
                         </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5 font-mono">
+                        <div className="text-[10px] text-[#64748b] mt-0.5 font-mono">
                           ID: {item.productId}
                         </div>
                       </td>
                       <td className="py-4 pr-4">
-                        <span className="text-xs text-muted-foreground capitalize">
+                        <span className="text-xs text-[#64748b] capitalize">
                           {item.category ?? '—'}
                         </span>
-                        <div className="text-[10px] text-muted-foreground">
+                        <div className="text-[10px] text-[#94a3b8]">
                           {item.validationMethod}
                         </div>
                       </td>
-                      <td className="py-4 pr-4 text-muted-foreground">
+                      <td className="py-4 pr-4 text-[#64748b] font-mono text-xs">
                         {item.wholesalePrice !== null && item.wholesaleCurrency
                           ? `${item.wholesaleCurrency === 'EUR' ? '€' : '$'}${item.wholesalePrice.toFixed(2)} ${item.wholesaleCurrency}`
                           : '—'}
                       </td>
-                      <td className="py-4 pr-4 text-muted-foreground font-mono">
+                      <td className="py-4 pr-4 text-[#64748b] font-mono text-xs">
                         {item.wholesaleInNgn !== null
                           ? `₦${item.wholesaleInNgn.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                           : '—'}
@@ -335,21 +341,19 @@ export default function SSLPage() {
                       </td>
                       <td className="py-4 pr-4">
                         {item.netProfit !== null && item.profitMarginPercent !== null ? (
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 text-xs font-bold font-mono border ${
-                              item.isLoss
-                                ? 'bg-red-50 text-red-700 border-red-200'
-                                : 'bg-green-50 text-green-700 border-green-200'
-                            }`}
-                          >
-                            {item.isLoss ? '' : '+'}₦{item.netProfit.toLocaleString()} (
-                            {item.profitMarginPercent.toFixed(1)}%)
+                          <span className={item.isLoss ? 'pnl-pill-negative' : 'pnl-pill-positive'}>
+                            {item.isLoss ? (
+                              <ArrowDownRight size={12} className="text-rose-500" />
+                            ) : (
+                              <ArrowUpRight size={12} className="text-emerald-600" />
+                            )}
+                            {item.isLoss ? '' : '+'}₦{item.netProfit.toLocaleString()} ({item.profitMarginPercent.toFixed(1)}%)
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-[#64748b]">—</span>
                         )}
                       </td>
-                      <td className="py-4 pr-4 text-right font-bold text-primary font-mono text-sm">
+                      <td className="py-4 pr-4 text-right font-bold text-[#0f172a] font-mono text-xs">
                         {item.finalRetailPrice !== null
                           ? `₦${item.finalRetailPrice.toLocaleString()}`
                           : '—'}
@@ -357,7 +361,10 @@ export default function SSLPage() {
                       <td className="py-4 text-right">
                         <div className="flex justify-end items-center gap-1.5">
                           <Button
-                            onClick={() => handleEditProduct(item)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditProduct(item);
+                            }}
                             variant="outline"
                             size="sm"
                             className="px-2 py-1 h-7 text-xs font-semibold"
@@ -367,10 +374,11 @@ export default function SSLPage() {
                           </Button>
                           {item.isOverridden && (
                             <button
-                              onClick={() =>
-                                handleDeleteOverride(item.productId, item.name)
-                              }
-                              className="p-1 text-destructive hover:bg-destructive/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteOverride(item.productId, item.name);
+                              }}
+                              className="p-1 text-[#94a3b8] hover:text-rose-600 transition-colors cursor-pointer"
                               title="Revert to global default"
                             >
                               <Trash2 size={14} />
@@ -392,20 +400,20 @@ export default function SSLPage() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-[#031033]/40 backdrop-blur-xs z-40 transition-opacity duration-300 opacity-100"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 transition-opacity duration-300 opacity-100"
             onClick={() => setSelectedProduct(null)}
           />
 
           {/* Modal Panel */}
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border shadow-2xl z-50 p-6 flex flex-col">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-[#e2e8f0] shadow-2xl rounded-xl z-50 p-6 flex flex-col">
             <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
               <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <Shield size={16} className="text-primary" />
+                <Shield size={16} className="text-sky-600" />
                 Configure Pricing
               </h3>
               <button
                 onClick={() => setSelectedProduct(null)}
-                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg"
               >
                 <X size={18} />
               </button>
@@ -430,10 +438,10 @@ export default function SSLPage() {
                       key={type}
                       type="button"
                       onClick={() => setMarkupType(type)}
-                      className={`py-2 px-1 text-center text-xs font-semibold border border-border transition-colors cursor-pointer ${
+                      className={`py-2 px-1 text-center text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
                         markupType === type
-                          ? 'bg-[#e8900a] text-white border-[#e8900a]'
-                          : 'bg-background text-muted-foreground hover:bg-muted/50'
+                          ? 'bg-[#0f172a] text-white border-[#0f172a]'
+                          : 'bg-white text-muted-foreground border-border hover:bg-slate-50'
                       }`}
                     >
                       {type === 'PERCENTAGE'
@@ -457,7 +465,7 @@ export default function SSLPage() {
                     required
                     value={markupPercentage}
                     onChange={(e) => setMarkupPercentage(e.target.value)}
-                    className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                    className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                     placeholder="e.g. 50"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
@@ -476,7 +484,7 @@ export default function SSLPage() {
                     required
                     value={flatFee}
                     onChange={(e) => setFlatFee(e.target.value)}
-                    className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                    className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                     placeholder="e.g. 10000"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
@@ -495,7 +503,7 @@ export default function SSLPage() {
                     required
                     value={customPrice}
                     onChange={(e) => setCustomPrice(e.target.value)}
-                    className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                    className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                     placeholder="e.g. 50000"
                     min="0"
                   />
@@ -526,6 +534,17 @@ export default function SSLPage() {
           </div>
         </>
       )}
+
+      {/* Row Inspector Drawer */}
+      <RowDetailDrawer
+        isOpen={!!inspectedProduct}
+        onClose={() => setInspectedProduct(null)}
+        title={inspectedProduct?.name || 'SSL Product'}
+        subtitle={`Wholesale: $${inspectedProduct?.wholesalePriceUsd?.toFixed(2)} USD`}
+        entityType="SSL CERTIFICATE"
+        data={inspectedProduct}
+        status={inspectedProduct?.isOverridden ? 'OVERRIDDEN' : 'GLOBAL_RULE'}
+      />
     </div>
   );
 }

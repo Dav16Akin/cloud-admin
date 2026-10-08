@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { RowDetailDrawer } from '@/components/ui/row-detail-drawer';
 import {
   useDomainPricing,
   useUpdateGlobalPricing,
@@ -24,6 +25,8 @@ import {
   TrendingUp,
   AlertCircle,
   Trash2,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
 
 export default function DomainsPage() {
@@ -33,6 +36,9 @@ export default function DomainsPage() {
   const updateGlobalPricing = useUpdateGlobalPricing();
   const updateExtensionPricing = useUpdateExtensionPricing();
   const deleteExtensionPricing = useDeleteExtensionPricing();
+
+  // Inspection state
+  const [inspectedItem, setInspectedItem] = useState<{ type: string; title: string; subtitle?: string; data: any; status?: string } | null>(null);
 
   // Navigation
   const [activeTab, setActiveTab] = useState<'pricing' | 'list'>('pricing');
@@ -149,16 +155,16 @@ export default function DomainsPage() {
       {/* Toast Notification Banner */}
       {notification && (
         <div
-          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border shadow-lg transition-all duration-300 ${
+          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border shadow-lg rounded-xl transition-all duration-300 ${
             notification.type === 'success'
-              ? 'bg-[#fff8ee] border-[#e8900a]/20 text-[#031033]'
-              : 'bg-destructive/10 border-destructive/20 text-destructive'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}
         >
           {notification.type === 'success' ? (
-            <Check size={18} className="text-[#e8900a]" />
+            <Check size={18} className="text-emerald-600" />
           ) : (
-            <AlertCircle size={18} />
+            <AlertCircle size={18} className="text-rose-600" />
           )}
           <span className="text-sm font-medium">{notification.message}</span>
         </div>
@@ -166,8 +172,8 @@ export default function DomainsPage() {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Domains</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0f172a]">Domains</h1>
+          <p className="text-sm text-[#64748b]">
             Configure pricing margins, exchange rates, and manage registered domain names.
           </p>
         </div>
@@ -190,23 +196,23 @@ export default function DomainsPage() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-border mb-6">
+      <div className="flex border-b border-[#e2e8f0] mb-6 gap-2">
         <button
           onClick={() => setActiveTab('pricing')}
-          className={`px-6 py-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`px-5 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-colors cursor-pointer ${
             activeTab === 'pricing'
-              ? 'border-primary text-primary bg-background'
-              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+              ? 'border-[#0f172a] text-[#0f172a] bg-white'
+              : 'border-transparent text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100/60'
           }`}
         >
           Pricing & Profit Margins
         </button>
         <button
           onClick={() => setActiveTab('list')}
-          className={`px-6 py-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+          className={`px-5 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-colors cursor-pointer ${
             activeTab === 'list'
-              ? 'border-primary text-primary bg-background'
-              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+              ? 'border-[#0f172a] text-[#0f172a] bg-white'
+              : 'border-transparent text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100/60'
           }`}
         >
           Registered Domains ({domainsData?.length ?? 0})
@@ -296,9 +302,9 @@ export default function DomainsPage() {
 
           {/* Inline Edit Globals Form */}
           {isEditingGlobals ? (
-            <Card className="border-[#e8900a]/20 bg-[#fff8ee]/25">
+            <Card className="border-[#e2e8f0] bg-slate-50/70 rounded-xl">
               <CardHeader>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">Update Global Pricing Settings</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#0f172a]">Update Global Pricing Settings</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveGlobals} className="space-y-4">
@@ -310,7 +316,7 @@ export default function DomainsPage() {
                         required
                         value={usdRate}
                         onChange={(e) => setUsdRate(e.target.value)}
-                        className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                        className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                         placeholder="e.g. 1400"
                       />
                     </div>
@@ -321,7 +327,7 @@ export default function DomainsPage() {
                         required
                         value={eurRate}
                         onChange={(e) => setEurRate(e.target.value)}
-                        className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                        className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                         placeholder="e.g. 1640"
                       />
                     </div>
@@ -330,7 +336,7 @@ export default function DomainsPage() {
                       <select
                         value={globalMarkupType}
                         onChange={(e) => setGlobalMarkupType(e.target.value as any)}
-                        className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                        className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                       >
                         <option value="PERCENTAGE">Percentage Markup (%)</option>
                         <option value="FLAT_FEE">Flat NGN Fee Added (₦)</option>
@@ -347,7 +353,7 @@ export default function DomainsPage() {
                           required
                           value={globalMarkup}
                           onChange={(e) => setGlobalMarkup(e.target.value)}
-                          className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                          className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                           placeholder="e.g. 50"
                         />
                       </div>
@@ -359,7 +365,7 @@ export default function DomainsPage() {
                           required
                           value={globalFlatFee}
                           onChange={(e) => setGlobalFlatFee(e.target.value)}
-                          className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                          className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                           placeholder="e.g. 5000"
                         />
                       </div>
@@ -424,19 +430,28 @@ export default function DomainsPage() {
                       {pricingData?.extensions.map((extItem) => (
                         <tr
                           key={extItem.extension}
-                          className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                          onClick={() =>
+                            setInspectedItem({
+                              type: 'TLD PRICING',
+                              title: `.${extItem.extension}`,
+                              subtitle: `Wholesale: ${extItem.wholesaleCurrency === 'EUR' ? '€' : '$'}${extItem.wholesalePrice.toFixed(2)} (${extItem.wholesaleCurrency})`,
+                              data: extItem,
+                              status: extItem.isOverridden ? 'OVERRIDDEN' : 'GLOBAL_RULE',
+                            })
+                          }
+                          className="border-b border-[#e2e8f0] last:border-0 hover:bg-[#f8fafc] transition-colors cursor-pointer group"
                         >
-                          <td className="py-4 pr-4 font-bold text-foreground">
+                          <td className="py-4 pr-4 font-bold text-[#0f172a] group-hover:text-emerald-600 transition-colors font-mono">
                             .{extItem.extension}
                           </td>
-                          <td className="py-4 pr-4 text-muted-foreground">
+                          <td className="py-4 pr-4 text-[#64748b] font-mono text-xs">
                             {extItem.wholesaleCurrency === 'EUR' ? '€' : '$'}
                             {extItem.wholesalePrice.toFixed(2)} {extItem.wholesaleCurrency}
                           </td>
-                          <td className="py-4 pr-4 text-muted-foreground font-mono">
+                          <td className="py-4 pr-4 text-[#64748b] font-mono text-xs">
                             ₦{extItem.wholesaleInNgn.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </td>
-                          <td className="py-4 pr-4 text-foreground">
+                          <td className="py-4 pr-4">
                             {extItem.markupType === 'CUSTOM_PRICE' ? (
                               <Badge variant="info">₦{extItem.customPrice?.toLocaleString()} Fixed</Badge>
                             ) : extItem.markupType === 'FLAT_FEE' ? (
@@ -448,29 +463,31 @@ export default function DomainsPage() {
                             )}
                           </td>
                           <td className="py-4 pr-4">
-                            <span
-                              className={`inline-flex items-center px-2 py-0.5 text-xs font-bold font-mono border ${
-                                extItem.isLoss
-                                  ? 'bg-red-50 text-red-700 border-red-200'
-                                  : 'bg-green-50 text-green-700 border-green-200'
-                              }`}
-                            >
+                            <span className={extItem.isLoss ? 'pnl-pill-negative' : 'pnl-pill-positive'}>
+                              {extItem.isLoss ? (
+                                <ArrowDownRight size={12} className="text-rose-500" />
+                              ) : (
+                                <ArrowUpRight size={12} className="text-emerald-600" />
+                              )}
                               {extItem.isLoss ? '' : '+'}₦{extItem.netProfit.toLocaleString()} ({extItem.profitMarginPercent.toFixed(1)}%)
                             </span>
                           </td>
-                          <td className="py-4 pr-4 text-right font-bold text-primary font-mono text-sm">
+                          <td className="py-4 pr-4 text-right font-bold text-[#0f172a] font-mono text-xs">
                             ₦{extItem.finalRetailPrice.toLocaleString()}
                           </td>
-                          <td className="py-4 pr-4 text-right font-bold text-amber-600 font-mono text-sm">
+                          <td className="py-4 pr-4 text-right font-bold text-[#0f172a] font-mono text-xs">
                             ₦{extItem.finalRetailRenewPrice.toLocaleString()}
                             {extItem.renewalCustomPrice !== null && (
-                              <span className="block text-[10px] text-muted-foreground font-sans font-normal">Fixed</span>
+                              <span className="block text-[10px] text-[#64748b] font-sans font-normal">Fixed</span>
                             )}
                           </td>
                           <td className="py-4 text-right">
                             <div className="flex justify-end items-center gap-1.5">
                               <Button
-                                onClick={() => handleEditExtension(extItem)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditExtension(extItem);
+                                }}
                                 variant="outline"
                                 size="sm"
                                 className="px-2 py-1 h-7 text-xs font-semibold"
@@ -481,8 +498,11 @@ export default function DomainsPage() {
 
                               {extItem.isOverridden && (
                                 <button
-                                  onClick={() => handleDeleteOverride(extItem.extension)}
-                                  className="p-1 text-destructive hover:bg-destructive/10 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteOverride(extItem.extension);
+                                  }}
+                                  className="p-1 text-[#94a3b8] hover:text-rose-600 transition-colors cursor-pointer"
                                   title="Revert to default"
                                 >
                                   <Trash2 size={14} />
@@ -508,13 +528,13 @@ export default function DomainsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle>All User Registered Domains</CardTitle>
               <div className="relative w-full max-w-sm">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#94a3b8]" />
                 <input
                   type="text"
                   placeholder="Search domains or users..."
                   value={domainSearch}
                   onChange={(e) => setDomainSearch(e.target.value)}
-                  className="w-full text-sm border border-border pl-9 pr-4 py-2 bg-background focus:outline-[#e8900a]"
+                  className="w-full text-xs border border-[#cbd5e1] rounded-lg pl-9 pr-4 py-2 bg-white text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
             </div>
@@ -547,7 +567,16 @@ export default function DomainsPage() {
                     {filteredDomains.map((dom) => (
                       <tr
                         key={dom.id}
-                        className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                        onClick={() =>
+                          setInspectedItem({
+                            type: 'REGISTERED DOMAIN',
+                            title: dom.name,
+                            subtitle: dom.user ? `${dom.user.firstName || ''} ${dom.user.lastName || ''} (${dom.user.email})` : undefined,
+                            data: dom,
+                            status: dom.status,
+                          })
+                        }
+                        className="border-b border-[#e2e8f0] last:border-0 hover:bg-[#f8fafc] transition-colors cursor-pointer group"
                       >
                         <td className="py-4 pr-4 font-bold text-foreground flex items-center gap-2">
                           <Globe size={14} className="text-muted-foreground" />
@@ -598,17 +627,17 @@ export default function DomainsPage() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-[#031033]/40 backdrop-blur-xs z-40 transition-opacity duration-300 opacity-100"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 transition-opacity duration-300 opacity-100"
             onClick={() => setSelectedExtension(null)}
           />
 
           {/* Modal Centered Panel */}
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border shadow-2xl z-50 p-6 flex flex-col">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-[#e2e8f0] shadow-2xl rounded-xl z-50 p-6 flex flex-col">
             <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
               <h3 className="text-lg font-bold text-foreground">Configure Pricing: .{selectedExtension}</h3>
               <button
                 onClick={() => setSelectedExtension(null)}
-                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg"
               >
                 <X size={18} />
               </button>
@@ -621,10 +650,10 @@ export default function DomainsPage() {
                   <button
                     type="button"
                     onClick={() => setTldMarkupType('PERCENTAGE')}
-                    className={`py-2 px-1 text-center text-xs font-semibold border border-border transition-colors cursor-pointer ${
+                    className={`py-2 px-1 text-center text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
                       tldMarkupType === 'PERCENTAGE'
-                        ? 'bg-[#e8900a] text-white border-[#e8900a]'
-                        : 'bg-background text-muted-foreground hover:bg-muted/50'
+                        ? 'bg-[#0f172a] text-white border-[#0f172a]'
+                        : 'bg-white text-muted-foreground border-border hover:bg-slate-50'
                     }`}
                   >
                     Markup %
@@ -632,10 +661,10 @@ export default function DomainsPage() {
                   <button
                     type="button"
                     onClick={() => setTldMarkupType('FLAT_FEE')}
-                    className={`py-2 px-1 text-center text-xs font-semibold border border-border transition-colors cursor-pointer ${
+                    className={`py-2 px-1 text-center text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
                       tldMarkupType === 'FLAT_FEE'
-                        ? 'bg-[#e8900a] text-white border-[#e8900a]'
-                        : 'bg-background text-muted-foreground hover:bg-muted/50'
+                        ? 'bg-[#0f172a] text-white border-[#0f172a]'
+                        : 'bg-white text-muted-foreground border-border hover:bg-slate-50'
                     }`}
                   >
                     Flat Fee (₦)
@@ -643,10 +672,10 @@ export default function DomainsPage() {
                   <button
                     type="button"
                     onClick={() => setTldMarkupType('CUSTOM_PRICE')}
-                    className={`py-2 px-1 text-center text-xs font-semibold border border-border transition-colors cursor-pointer ${
+                    className={`py-2 px-1 text-center text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
                       tldMarkupType === 'CUSTOM_PRICE'
-                        ? 'bg-[#e8900a] text-white border-[#e8900a]'
-                        : 'bg-background text-muted-foreground hover:bg-muted/50'
+                        ? 'bg-[#0f172a] text-white border-[#0f172a]'
+                        : 'bg-white text-muted-foreground border-border hover:bg-slate-50'
                     }`}
                   >
                     Fixed Price (₦)
@@ -662,7 +691,7 @@ export default function DomainsPage() {
                     required
                     value={tldMarkup}
                     onChange={(e) => setTldMarkup(e.target.value)}
-                    className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                    className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                     placeholder="e.g. 50"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
@@ -679,7 +708,7 @@ export default function DomainsPage() {
                     required
                     value={tldFlatFee}
                     onChange={(e) => setTldFlatFee(e.target.value)}
-                    className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                    className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                     placeholder="e.g. 5000"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
@@ -696,7 +725,7 @@ export default function DomainsPage() {
                     required
                     value={tldCustomPrice}
                     onChange={(e) => setTldCustomPrice(e.target.value)}
-                    className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                    className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                     placeholder="e.g. 25000"
                     min="0"
                   />
@@ -714,7 +743,7 @@ export default function DomainsPage() {
                   type="number"
                   value={tldRenewalPrice}
                   onChange={(e) => setTldRenewalPrice(e.target.value)}
-                  className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                  className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                   placeholder="Leave blank to use calculated renewal rate"
                   min="0"
                 />
@@ -744,6 +773,17 @@ export default function DomainsPage() {
           </div>
         </>
       )}
+
+      {/* Row Inspector Drawer */}
+      <RowDetailDrawer
+        isOpen={!!inspectedItem}
+        onClose={() => setInspectedItem(null)}
+        title={inspectedItem?.title || 'Inspection'}
+        subtitle={inspectedItem?.subtitle}
+        entityType={inspectedItem?.type || 'DOMAIN'}
+        data={inspectedItem?.data}
+        status={inspectedItem?.status}
+      />
     </div>
   );
 }

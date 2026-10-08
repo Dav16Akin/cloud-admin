@@ -24,7 +24,7 @@ export interface Order {
   userId: string;
   planId: string | null;
   amount: number;
-  status: 'PENDING' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'COMPLETED' | 'PAID';
+  status: 'PENDING' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'COMPLETED' | 'PAID' | 'FAILED';
   whmcsInvoiceId?: number | null;
   paystackRef?: string;
   paystackData?: unknown;

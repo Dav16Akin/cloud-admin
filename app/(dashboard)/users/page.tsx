@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Copy, Check } from 'lucide-react';
 import { useUsers, useUserActivity } from '@/lib/hooks/useUsers';
 import { useOrders } from '@/lib/hooks/useOrders';
 
@@ -12,7 +13,8 @@ export default function UsersPage() {
   const { data: orders, isLoading: isOrdersLoading } = useOrders();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'logs' | 'services' | 'orders'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'services' | 'orders' | 'json'>('logs');
+  const [copiedJson, setCopiedJson] = useState(false);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [showAmount, setShowAmount] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -42,17 +44,16 @@ export default function UsersPage() {
   const verifiedUsers = users?.filter((u) => u.verified).length ?? 0;
 
   // Calculate total gained excluding admin users
-  const adminUserIds = new Set(
-    users?.filter((u) => u.role === 'ADMIN').map((u) => u.id) ?? []
-  );
+  const adminUserIds = new Set(users?.filter((u) => u.role === 'ADMIN').map((u) => u.id) ?? []);
 
-  const totalGained = orders
-    ?.filter(
-      (order) =>
-        (order.status === 'PAID' || order.status === 'COMPLETED' || order.status === 'ACTIVE') &&
-        !adminUserIds.has(order.userId),
-    )
-    .reduce((sum, order) => sum + Number(order.amount), 0) ?? 0;
+  const totalGained =
+    orders
+      ?.filter(
+        (order) =>
+          (order.status === 'PAID' || order.status === 'COMPLETED' || order.status === 'ACTIVE') &&
+          !adminUserIds.has(order.userId),
+      )
+      .reduce((sum, order) => sum + Number(order.amount), 0) ?? 0;
 
   const handleOpenDrawer = (userId: string) => {
     setSelectedUserId(userId);
@@ -73,70 +74,117 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="relative min-h-screen">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Users</h1>
+    <div className="relative space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-[#0f172a]">Users & clients</h1>
+        <p className="mt-1 text-xs text-[#64748b]">
+          Client accounts, verification status, credentials, and ledger overview.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
-            <CardTitle>Total Users</CardTitle>
+            <CardTitle>Total users</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">
-              {isUsersLoading ? <span className="text-muted-foreground">...</span> : totalUsers}
+            <p className="font-mono text-2xl font-bold tracking-tight text-[#0f172a]">
+              {isUsersLoading ? (
+                <span className="text-[#94a3b8]">...</span>
+              ) : (
+                totalUsers.toLocaleString()
+              )}
             </p>
+            <p className="mt-1.5 text-xs text-[#64748b]">Registered identities</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Verified Users</CardTitle>
+            <CardTitle>Verified users</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-[#16a34a]">
-              {isUsersLoading ? <span className="text-muted-foreground">...</span> : verifiedUsers}
+            <p className="font-mono text-2xl font-bold tracking-tight text-emerald-600">
+              {isUsersLoading ? (
+                <span className="text-[#94a3b8]">...</span>
+              ) : (
+                verifiedUsers.toLocaleString()
+              )}
             </p>
+            <p className="mt-1.5 text-xs text-emerald-600">KYC / Email verified</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Unverified Users</CardTitle>
+            <CardTitle>Unverified users</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-destructive">
-              {isUsersLoading ? <span className="text-muted-foreground">...</span> : totalUsers - verifiedUsers}
+            <p className="font-mono text-2xl font-bold tracking-tight text-rose-600">
+              {isUsersLoading ? (
+                <span className="text-[#94a3b8]">...</span>
+              ) : (
+                (totalUsers - verifiedUsers).toLocaleString()
+              )}
             </p>
+            <p className="mt-1.5 text-xs text-rose-600">Pending verification</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle>Total Gained</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle>Total gained</CardTitle>
             <button
               onClick={toggleShowAmount}
-              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
+              className="cursor-pointer p-1 text-[#94a3b8] transition-colors hover:text-[#0f172a]"
               title={showAmount ? 'Hide Amount' : 'Show Amount'}
             >
               {showAmount ? (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.815 7.815L21 21m-2.772-2.772-3.65-3.65m0 0a3 3 0 1 1-4.243-4.243m4.242 4.242L9.88 9.88" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.815 7.815L21 21m-2.772-2.772-3.65-3.65m0 0a3 3 0 1 1-4.243-4.243m4.242 4.242L9.88 9.88"
+                  />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
                 </svg>
               )}
             </button>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-[#e8900a]">
+            <p className="font-mono text-2xl font-bold tracking-tight text-[#0f172a]">
               {isOrdersLoading || isUsersLoading ? (
-                <span className="text-muted-foreground">...</span>
+                <span className="text-[#94a3b8]">...</span>
               ) : showAmount ? (
                 `₦${totalGained.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
               ) : (
                 '₦••••••'
               )}
             </p>
+            <p className="mt-1.5 text-xs text-emerald-600">Non-admin client volume</p>
           </CardContent>
         </Card>
       </div>
@@ -146,53 +194,65 @@ export default function UsersPage() {
           <CardTitle>All Users</CardTitle>
         </CardHeader>
         <CardContent>
-          {isUsersLoading && <p className="text-muted-foreground">Loading users...</p>}
-          {error && <p className="text-destructive">Failed to load users.</p>}
-          {users && users.length === 0 && (
-            <p className="text-muted-foreground">No users found.</p>
-          )}
+          {isUsersLoading && <p className="text-[#64748b]">Loading users...</p>}
+          {error && <p className="text-rose-600">Failed to load users.</p>}
+          {users && users.length === 0 && <p className="text-[#64748b]">No users found.</p>}
           {users && users.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left text-muted-foreground">
-                    <th className="pb-3 pr-4 font-medium">Name</th>
-                    <th className="pb-3 pr-4 font-medium">Email</th>
-                    <th className="pb-3 pr-4 font-medium">Company</th>
-                    <th className="pb-3 pr-4 font-medium">Phone</th>
-                    <th className="pb-3 pr-4 font-medium">Verified</th>
-                    <th className="pb-3 pr-4 font-medium">Role</th>
-                    <th className="pb-3 font-medium">Created</th>
+                  <tr className="border-b border-[#e2e8f0] bg-[#f8fafc]/50 text-left text-[#64748b]">
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Email
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Company
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Phone
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Verified
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Role
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Created
+                    </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[#f1f5f9]">
                   {[...users]
-                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .sort(
+                      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                    )
                     .map((user) => (
                       <tr
                         key={user.id}
-                        className="border-b border-border last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
+                        className="cursor-pointer transition-colors hover:bg-[#f8fafc]"
                         onClick={() => handleOpenDrawer(user.id)}
                       >
-                        <td className="py-3 pr-4 text-foreground font-medium">
+                        <td className="px-4 py-3.5 font-medium text-[#0f172a]">
                           {user.firstName && user.lastName
                             ? `${user.firstName} ${user.lastName}`
                             : user.email}
                         </td>
-                        <td className="py-3 pr-4 text-muted-foreground">{user.email}</td>
-                        <td className="py-3 pr-4 text-muted-foreground">
-                          {user.companyName || '—'}
-                        </td>
-                        <td className="py-3 pr-4 text-muted-foreground">
-                          {user.phoneNumber || '—'}
-                        </td>
-                        <td className="py-3 pr-4">
+                        <td className="px-4 py-3.5 text-[#64748b]">{user.email}</td>
+                        <td className="px-4 py-3.5 text-[#64748b]">{user.companyName || '—'}</td>
+                        <td className="px-4 py-3.5 text-[#64748b]">{user.phoneNumber || '—'}</td>
+                        <td className="px-4 py-3.5">
                           <Badge variant={user.verified ? 'success' : 'danger'}>
                             {user.verified ? 'Verified' : 'Unverified'}
                           </Badge>
                         </td>
-                        <td className="py-3 pr-4 text-foreground">{user.role}</td>
-                        <td className="py-3 text-muted-foreground">
+                        <td className="px-4 py-3.5 font-mono text-[11px] text-[#64748b]">
+                          {user.role}
+                        </td>
+                        <td className="px-4 py-3.5 text-[#64748b]">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -207,8 +267,8 @@ export default function UsersPage() {
       {/* Backdrop overlay */}
       {selectedUserId && (
         <div
-          className={`fixed inset-0 bg-[#031033]/40 backdrop-blur-xs z-40 transition-opacity duration-300 ${
-            isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          className={`fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-[2px] transition-opacity duration-300 ${
+            isDrawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
           onClick={handleCloseDrawer}
         />
@@ -217,28 +277,30 @@ export default function UsersPage() {
       {/* Slide-over Drawer Panel */}
       {selectedUserId && (
         <div
-          className={`fixed top-0 right-0 h-full w-full max-w-xl md:max-w-2xl bg-card border-l border-border shadow-2xl flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${
+          className={`fixed top-0 right-0 z-50 flex h-full w-full max-w-xl transform flex-col border-l border-[#e2e8f0] bg-white shadow-2xl transition-transform duration-300 ease-in-out md:max-w-2xl ${
             isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
           {/* Drawer Header */}
-          <div className="p-6 border-b border-border flex items-start justify-between">
+          <div className="flex items-start justify-between border-b border-[#e2e8f0] bg-[#f8fafc] p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-secondary border border-border flex items-center justify-center font-bold text-lg text-primary">
-                {activityData?.user?.firstName?.[0] || activityData?.user?.email?.[0]?.toUpperCase() || '?'}
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-base font-bold text-[#0f172a]">
+                {activityData?.user?.firstName?.[0] ||
+                  activityData?.user?.email?.[0]?.toUpperCase() ||
+                  '?'}
               </div>
               <div>
-                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <h2 className="flex items-center gap-2 text-lg font-bold text-[#0f172a]">
                   {activityData?.user?.firstName && activityData?.user?.lastName
                     ? `${activityData.user.firstName} ${activityData.user.lastName}`
                     : activityData?.user?.email || 'Loading Details...'}
                 </h2>
-                <p className="text-sm text-muted-foreground">{activityData?.user?.email}</p>
+                <p className="text-xs text-[#64748b]">{activityData?.user?.email}</p>
               </div>
             </div>
             <button
               onClick={handleCloseDrawer}
-              className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="cursor-pointer rounded-md p-1 text-[#64748b] transition-colors hover:bg-slate-200/70 hover:text-[#0f172a]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -246,7 +308,7 @@ export default function UsersPage() {
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="w-6 h-6"
+                className="h-6 w-6"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
@@ -254,19 +316,25 @@ export default function UsersPage() {
           </div>
 
           {/* User quick metrics and metadata */}
-          <div className="px-6 py-4 bg-muted/30 border-b border-border grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-2 gap-4 border-b border-[#e2e8f0] bg-white px-6 py-4 text-xs md:grid-cols-4">
             <div>
-              <span className="text-muted-foreground block mb-0.5">Role</span>
+              <span className="mb-1 block text-[10px] font-semibold tracking-wider text-[#64748b] uppercase">
+                Role
+              </span>
               <Badge variant="info">{activityData?.user?.role || '...'}</Badge>
             </div>
             <div>
-              <span className="text-muted-foreground block mb-0.5">Verification</span>
+              <span className="mb-1 block text-[10px] font-semibold tracking-wider text-[#64748b] uppercase">
+                Verification
+              </span>
               <Badge variant={activityData?.user?.verified ? 'success' : 'danger'}>
                 {activityData?.user?.verified ? 'Verified' : 'Unverified'}
               </Badge>
             </div>
             <div>
-              <span className="text-muted-foreground block mb-0.5">WHMCS Sync</span>
+              <span className="mb-1 block text-[10px] font-semibold tracking-wider text-[#64748b] uppercase">
+                WHMCS Sync
+              </span>
               {activityData?.user?.whmcsClientId ? (
                 <Badge variant="green">Sync ID: {activityData.user.whmcsClientId}</Badge>
               ) : (
@@ -274,8 +342,10 @@ export default function UsersPage() {
               )}
             </div>
             <div>
-              <span className="text-muted-foreground block mb-0.5">Joined</span>
-              <span className="font-semibold text-foreground">
+              <span className="mb-1 block text-[10px] font-semibold tracking-wider text-[#64748b] uppercase">
+                Joined
+              </span>
+              <span className="font-semibold text-[#0f172a]">
                 {activityData?.user?.createdAt
                   ? new Date(activityData.user.createdAt).toLocaleDateString()
                   : '...'}
@@ -284,45 +354,55 @@ export default function UsersPage() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-border bg-muted/10">
+          <div className="flex border-b border-[#e2e8f0] bg-white">
             <button
               onClick={() => setActiveTab('logs')}
-              className={`flex-1 py-3 text-sm font-semibold border-b-2 text-center transition-colors cursor-pointer ${
+              className={`flex-1 cursor-pointer border-b-2 py-3 text-center text-xs font-semibold transition-colors ${
                 activeTab === 'logs'
-                  ? 'border-primary text-primary bg-background'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                  ? 'border-[#0f172a] text-[#0f172a]'
+                  : 'border-transparent text-[#64748b] hover:bg-slate-50 hover:text-[#0f172a]'
               }`}
             >
               Audit Logs
             </button>
             <button
               onClick={() => setActiveTab('services')}
-              className={`flex-1 py-3 text-sm font-semibold border-b-2 text-center transition-colors cursor-pointer ${
+              className={`flex-1 cursor-pointer border-b-2 py-3 text-center text-xs font-semibold transition-colors ${
                 activeTab === 'services'
-                  ? 'border-primary text-primary bg-background'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                  ? 'border-[#0f172a] text-[#0f172a]'
+                  : 'border-transparent text-[#64748b] hover:bg-slate-50 hover:text-[#0f172a]'
               }`}
             >
               Domains & Hosting
             </button>
             <button
               onClick={() => setActiveTab('orders')}
-              className={`flex-1 py-3 text-sm font-semibold border-b-2 text-center transition-colors cursor-pointer ${
+              className={`flex-1 cursor-pointer border-b-2 py-3 text-center text-xs font-semibold transition-colors ${
                 activeTab === 'orders'
-                  ? 'border-primary text-primary bg-background'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                  ? 'border-[#0f172a] text-[#0f172a]'
+                  : 'border-transparent text-[#64748b] hover:bg-slate-50 hover:text-[#0f172a]'
               }`}
             >
               Orders
             </button>
+            <button
+              onClick={() => setActiveTab('json')}
+              className={`flex-1 cursor-pointer border-b-2 py-3 text-center text-xs font-semibold transition-colors ${
+                activeTab === 'json'
+                  ? 'border-[#0f172a] text-[#0f172a]'
+                  : 'border-transparent text-[#64748b] hover:bg-slate-50 hover:text-[#0f172a]'
+              }`}
+            >
+              API Response
+            </button>
           </div>
 
           {/* Drawer Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto bg-white p-6">
             {isActivityLoading && (
-              <div className="flex flex-col items-center justify-center h-48 space-y-3">
+              <div className="flex h-48 flex-col items-center justify-center space-y-3">
                 <svg
-                  className="animate-spin h-8 w-8 text-primary"
+                  className="h-7 w-7 animate-spin text-emerald-400"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -341,13 +421,14 @@ export default function UsersPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                <p className="text-sm text-muted-foreground">Loading details and logs...</p>
+                <p className="text-xs text-[#64748b]">Loading details and logs...</p>
               </div>
             )}
 
             {activityError && (
-              <div className="p-4 bg-destructive/10 text-destructive text-sm border border-destructive/20">
-                Failed to load user activity details: {activityError instanceof Error ? activityError.message : 'Unknown error'}
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700">
+                Failed to load user activity details:{' '}
+                {activityError instanceof Error ? activityError.message : 'Unknown error'}
               </div>
             )}
 
@@ -357,33 +438,33 @@ export default function UsersPage() {
                 {activeTab === 'logs' && (
                   <div className="space-y-6">
                     {activityData.activity.logs.length === 0 ? (
-                      <p className="text-muted-foreground text-sm text-center py-12">
+                      <p className="py-12 text-center text-xs text-[#64748b]">
                         No activity logs recorded for this user.
                       </p>
                     ) : (
-                      <div className="relative border-l-2 border-border ml-3 pl-6 space-y-6">
+                      <div className="relative ml-3 space-y-6 border-l border-[#e2e8f0] pl-6">
                         {activityData.activity.logs.map((log) => (
-                          <div key={log.id} className="relative group">
+                          <div key={log.id} className="group relative">
                             {/* Timeline circle node */}
-                            <div className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 border-2 border-primary bg-background flex items-center justify-center" />
+                            <div className="absolute top-1.5 -left-[31px] h-3 w-3 rounded-full border border-sky-500 bg-white ring-4 ring-slate-100" />
 
                             <div>
                               <div className="flex items-start justify-between gap-4">
-                                <h4 className="text-sm font-semibold text-foreground">
+                                <h4 className="text-xs font-semibold text-[#0f172a]">
                                   {log.action}
                                 </h4>
-                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                <span className="text-[11px] whitespace-nowrap text-[#64748b]">
                                   {new Date(log.createdAt).toLocaleString()}
                                 </span>
                               </div>
-                              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                              <div className="mt-1 flex items-center gap-2 text-[11px] text-[#64748b]">
                                 <span>IP: {log.ipAddress || 'Unknown'}</span>
                                 {log.metadata && (
                                   <>
                                     <span>•</span>
                                     <button
                                       onClick={() => toggleLogExpand(log.id)}
-                                      className="text-primary hover:underline font-semibold cursor-pointer"
+                                      className="cursor-pointer font-medium text-sky-600 hover:underline"
                                     >
                                       {expandedLogId === log.id ? 'Hide Details' : 'View Details'}
                                     </button>
@@ -392,7 +473,7 @@ export default function UsersPage() {
                               </div>
 
                               {log.metadata && expandedLogId === log.id && (
-                                <pre className="mt-2 p-3 bg-secondary text-[11px] overflow-x-auto border border-border text-muted-foreground font-mono">
+                                <pre className="mt-2 overflow-x-auto rounded border border-[#1e293b] bg-[#0f172a] p-3 font-mono text-[11px] text-[#93c5fd]">
                                   {JSON.stringify(log.metadata, null, 2)}
                                 </pre>
                               )}
@@ -409,11 +490,11 @@ export default function UsersPage() {
                   <div className="space-y-6">
                     {/* Hosting Section */}
                     <div>
-                      <h3 className="text-sm font-bold text-foreground border-b border-border pb-2 mb-3 uppercase tracking-wider">
+                      <h3 className="mb-3 border-b border-[#e2e8f0] pb-2 text-xs font-bold tracking-wider text-[#0f172a] uppercase">
                         Hosting Accounts ({activityData.user.hostingAccounts.length})
                       </h3>
                       {activityData.user.hostingAccounts.length === 0 ? (
-                        <p className="text-xs text-muted-foreground py-2">
+                        <p className="py-2 text-xs text-[#64748b]">
                           No hosting accounts found for this user.
                         </p>
                       ) : (
@@ -421,22 +502,20 @@ export default function UsersPage() {
                           {activityData.user.hostingAccounts.map((host) => (
                             <div
                               key={host.id}
-                              className="border border-border p-4 bg-muted/10 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                              className="flex flex-col justify-between gap-3 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-4 md:flex-row md:items-center"
                             >
                               <div>
-                                <span className="text-xs text-muted-foreground block">
+                                <span className="block text-[11px] text-[#64748b]">
                                   {host.plan.name} Plan
                                 </span>
-                                <span className="text-sm font-bold text-foreground">
+                                <span className="text-xs font-semibold text-[#0f172a]">
                                   {host.domain}
                                 </span>
                               </div>
                               <div className="flex items-center gap-4 text-xs">
                                 <div>
-                                  <span className="text-muted-foreground block text-[10px]">
-                                    Expires
-                                  </span>
-                                  <span className="font-medium text-foreground">
+                                  <span className="block text-[10px] text-[#64748b]">Expires</span>
+                                  <span className="text-[11px] font-medium text-[#0f172a]">
                                     {new Date(host.expiresAt).toLocaleDateString()}
                                   </span>
                                 </div>
@@ -460,11 +539,11 @@ export default function UsersPage() {
 
                     {/* Domains Section */}
                     <div className="pt-2">
-                      <h3 className="text-sm font-bold text-foreground border-b border-border pb-2 mb-3 uppercase tracking-wider">
+                      <h3 className="mb-3 border-b border-[#e2e8f0] pb-2 text-xs font-bold tracking-wider text-[#0f172a] uppercase">
                         Domains ({activityData.user.domains.length})
                       </h3>
                       {activityData.user.domains.length === 0 ? (
-                        <p className="text-xs text-muted-foreground py-2">
+                        <p className="py-2 text-xs text-[#64748b]">
                           No domains registered for this user.
                         </p>
                       ) : (
@@ -472,22 +551,20 @@ export default function UsersPage() {
                           {activityData.user.domains.map((dom) => (
                             <div
                               key={dom.id}
-                              className="border border-border p-4 bg-muted/10 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                              className="flex flex-col justify-between gap-3 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-4 md:flex-row md:items-center"
                             >
                               <div>
-                                <span className="text-sm font-bold text-foreground">
+                                <span className="text-xs font-semibold text-[#0f172a]">
                                   {dom.name}
                                 </span>
-                                <span className="text-[10px] text-muted-foreground block mt-1">
+                                <span className="mt-0.5 block text-[10px] text-[#64748b]">
                                   NS: {dom.nameservers?.join(', ') || '—'}
                                 </span>
                               </div>
                               <div className="flex items-center gap-4 text-xs">
                                 <div>
-                                  <span className="text-muted-foreground block text-[10px]">
-                                    Expires
-                                  </span>
-                                  <span className="font-medium text-foreground">
+                                  <span className="block text-[10px] text-[#64748b]">Expires</span>
+                                  <span className="text-[11px] font-medium text-[#0f172a]">
                                     {dom.expiresAt
                                       ? new Date(dom.expiresAt).toLocaleDateString()
                                       : '—'}
@@ -517,34 +594,40 @@ export default function UsersPage() {
                 {activeTab === 'orders' && (
                   <div className="space-y-4">
                     {activityData.user.orders.length === 0 ? (
-                      <p className="text-muted-foreground text-sm text-center py-12">
+                      <p className="py-12 text-center text-xs text-[#64748b]">
                         No orders placed by this user.
                       </p>
                     ) : (
                       <div className="space-y-3">
                         {activityData.user.orders.map((order) => (
-                          <div key={order.id} className="border border-border p-4 bg-muted/10">
-                            <div className="flex items-start justify-between gap-4 mb-3 border-b border-border pb-2">
+                          <div
+                            key={order.id}
+                            className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-4"
+                          >
+                            <div className="mb-3 flex items-start justify-between gap-4 border-b border-[#e2e8f0] pb-2">
                               <div>
-                                <span className="text-[10px] text-muted-foreground block">
+                                <span className="block text-[10px] font-semibold tracking-wider text-[#64748b] uppercase">
                                   Order ID
                                 </span>
-                                <span className="text-xs font-mono font-bold text-foreground">
+                                <span className="font-mono text-xs font-semibold text-[#0f172a]">
                                   {order.id}
                                 </span>
                               </div>
                               <div className="flex items-center gap-4 text-right">
                                 <div>
-                                  <span className="text-muted-foreground block text-[10px]">
-                                    Amount
-                                  </span>
-                                  <span className="text-sm font-bold text-foreground">
-                                    ₦{Number(order.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  <span className="block text-[10px] text-[#64748b]">Amount</span>
+                                  <span className="text-xs font-bold text-[#0f172a]">
+                                    ₦
+                                    {Number(order.amount).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                    })}
                                   </span>
                                 </div>
                                 <Badge
                                   variant={
-                                    order.status === 'PAID' || order.status === 'COMPLETED' || order.status === 'ACTIVE'
+                                    order.status === 'PAID' ||
+                                    order.status === 'COMPLETED' ||
+                                    order.status === 'ACTIVE'
                                       ? 'green'
                                       : order.status === 'PENDING'
                                         ? 'warning'
@@ -557,31 +640,79 @@ export default function UsersPage() {
                             </div>
 
                             <div className="space-y-2">
-                              <span className="text-[10px] text-muted-foreground block uppercase font-bold tracking-wider">
+                              <span className="block text-[10px] font-semibold tracking-wider text-[#64748b] uppercase">
                                 Items Ordered
                               </span>
                               {order.items?.map((item, idx) => (
                                 <div
                                   key={idx}
-                                  className="flex items-center justify-between text-xs bg-background p-2 border border-border"
+                                  className="flex items-center justify-between rounded border border-[#e2e8f0] bg-white p-2.5 text-xs"
                                 >
-                                  <span className="font-semibold text-foreground">
+                                  <span className="font-medium text-[#0f172a]">
                                     {item.type} {item.domainName ? `(${item.domainName})` : ''}
                                   </span>
-                                  <span className="text-muted-foreground">
-                                    ₦{Number(item.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  <span className="text-[#64748b]">
+                                    ₦
+                                    {Number(item.price).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                    })}
                                   </span>
                                 </div>
                               ))}
                             </div>
 
-                            <div className="text-[10px] text-muted-foreground text-right mt-3">
+                            <div className="mt-3 text-right text-[10px] text-[#64748b]">
                               Placed on {new Date(order.createdAt).toLocaleString()}
                             </div>
                           </div>
                         ))}
                       </div>
                     )}
+                  </div>
+                )}
+
+                {activeTab === 'json' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-2">
+                      <div>
+                        <h3 className="text-xs font-semibold tracking-wider text-[#0f172a] uppercase">
+                          Raw API Response & Payload
+                        </h3>
+                        <p className="mt-0.5 text-[11px] text-[#64748b]">
+                          Complete backend response for user identity and activity
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const payload =
+                            activityData || users?.find((u) => u.id === selectedUserId);
+                          navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+                          setCopiedJson(true);
+                          setTimeout(() => setCopiedJson(false), 2000);
+                        }}
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-[#cbd5e1] bg-white px-2.5 py-1 font-mono text-xs text-[#0f172a] transition-colors hover:bg-slate-50"
+                      >
+                        {copiedJson ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-emerald-600" />
+                            <span className="text-emerald-600">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>Copy JSON</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <pre className="max-h-[520px] overflow-x-auto rounded-lg border border-[#1e293b] bg-[#0f172a] p-4 font-mono text-[11px] leading-relaxed text-[#93c5fd] selection:bg-slate-700">
+                      {JSON.stringify(
+                        activityData || users?.find((u) => u.id === selectedUserId) || {},
+                        null,
+                        2,
+                      )}
+                    </pre>
                   </div>
                 )}
               </>

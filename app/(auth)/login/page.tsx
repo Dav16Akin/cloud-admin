@@ -16,18 +16,20 @@ export default function LoginPage() {
   const isAccessDenied = login.error?.message === 'ACCESS_DENIED';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-foreground">
-            NupatCloud<span className="text-accent">Admin</span>
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Sign in to your admin account</p>
+        <div className="mb-8 text-center flex flex-col items-center">
+          <img
+            src="/logo-dark-text.png"
+            alt="Nupat Cloud"
+            className="h-10 w-auto max-w-[200px] mb-3 object-contain"
+          />
+          <p className="text-sm text-[#64748b]">Sign in to your admin account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="dashboard-card space-y-5 p-6">
+        <form onSubmit={handleSubmit} className="dashboard-card space-y-5 p-6 rounded-xl border-[#e2e8f0] shadow-sm">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
+            <label htmlFor="email" className="block text-sm font-medium text-[#0f172a] mb-1.5">
               Email
             </label>
             <input
@@ -36,13 +38,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="w-full border border-[#cbd5e1] rounded-lg bg-white px-3 py-2.5 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:ring-1 focus:ring-slate-400"
               placeholder="admin@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
+            <label htmlFor="password" className="block text-sm font-medium text-[#0f172a] mb-1.5">
               Password
             </label>
             <input
@@ -51,7 +53,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="w-full border border-[#cbd5e1] rounded-lg bg-white px-3 py-2.5 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:ring-1 focus:ring-slate-400"
               placeholder="••••••••"
             />
           </div>

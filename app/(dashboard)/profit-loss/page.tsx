@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { RowDetailDrawer } from '@/components/ui/row-detail-drawer';
 import { useProfitLoss } from '@/lib/hooks/useProfitLoss';
 import {
   TrendingUp,
@@ -19,6 +20,7 @@ import {
 export default function ProfitLossPage() {
   const { data: pnlData, isLoading, refetch } = useProfitLoss();
   const [searchQuery, setSearchQuery] = useState('');
+  const [inspectedRecord, setInspectedRecord] = useState<{ type: string; title: string; subtitle?: string; data: any; status?: string } | null>(null);
 
   // Filtering historical sales ledger
   const filteredSales =
@@ -203,13 +205,13 @@ export default function ProfitLossPage() {
               </p>
             </div>
             <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#94a3b8]" />
               <input
                 type="text"
                 placeholder="Search domain, ref, or customer email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-sm border border-border pl-9 pr-4 py-2 bg-background focus:outline-[#e8900a]"
+                className="w-full text-xs border border-[#cbd5e1] rounded-lg pl-9 pr-4 py-2 bg-white text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:ring-1 focus:ring-slate-400"
               />
             </div>
           </div>
@@ -243,66 +245,67 @@ export default function ProfitLossPage() {
                   {filteredSales.map((sale) => (
                     <tr
                       key={sale.id}
-                      className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors ${
-                        sale.hasSnapshot && sale.isLoss ? 'bg-red-50/15' : ''
-                      }`}
+                      onClick={() =>
+                        setInspectedRecord({
+                          type: 'HISTORICAL ORDER P&L',
+                          title: `${sale.domainName} (${sale.orderRef})`,
+                          subtitle: sale.user ? `${sale.user.firstName || ''} ${sale.user.lastName || ''} (${sale.user.email})` : undefined,
+                          data: sale,
+                          status: sale.hasSnapshot ? (sale.isLoss ? 'LOSS' : 'PROFIT') : 'LEGACY_OMITTED',
+                        })
+                      }
+                      className="border-b border-[#e2e8f0] last:border-0 hover:bg-[#f8fafc] transition-colors cursor-pointer group"
                     >
-                      <td className="py-4 pr-4 font-bold text-foreground">
+                      <td className="py-4 pr-4 font-bold text-[#0f172a] group-hover:text-emerald-600 transition-colors">
                         {sale.domainName}
-                        <span className="block text-[10px] text-muted-foreground font-normal uppercase">
+                        <span className="block text-[10px] text-[#64748b] font-normal uppercase">
                           {sale.type}
                         </span>
                       </td>
-                      <td className="py-4 pr-4 font-mono text-xs text-muted-foreground">
+                      <td className="py-4 pr-4 font-mono text-xs text-[#64748b]">
                         {sale.orderRef}
                       </td>
                       <td className="py-4 pr-4">
-                        <div className="text-foreground font-semibold">
+                        <div className="text-[#0f172a] font-medium text-xs">
                           {sale.user?.firstName} {sale.user?.lastName}
                         </div>
-                        <div className="text-muted-foreground text-xs">{sale.user?.email}</div>
+                        <div className="text-[#64748b] text-[11px]">{sale.user?.email}</div>
                       </td>
-                      <td className="py-4 pr-4 font-mono font-bold text-primary">
+                      <td className="py-4 pr-4 font-mono font-bold text-[#0f172a] text-xs">
                         ₦{sale.retailPrice.toLocaleString()}
                       </td>
-                      <td className="py-4 pr-4 font-mono text-xs text-muted-foreground">
+                      <td className="py-4 pr-4 font-mono text-xs text-[#64748b]">
                         {sale.hasSnapshot ? (
                           <div>
-                            <span className="font-bold text-foreground block">
+                            <span className="font-semibold text-[#0f172a] block">
                               ₦{sale.estimatedWholesaleCost?.toLocaleString()}
                             </span>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-[10px] text-[#64748b]">
                               ({sale.wholesaleCurrency === 'EUR' ? '€' : '$'}{sale.wholesalePrice?.toFixed(2)} @ ₦{sale.exchangeRate?.toLocaleString()})
                             </span>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground italic text-xs flex items-center gap-1">
+                          <span className="text-[#64748b] italic text-xs flex items-center gap-1">
                             <Info size={12} />
                             Legacy Purchase (Unrecorded Rate)
                           </span>
                         )}
                       </td>
-                      <td className="py-4 pr-4 text-muted-foreground text-xs">
+                      <td className="py-4 pr-4 text-[#64748b] text-xs">
                         {new Date(sale.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-4 text-right font-mono font-bold">
                         {sale.hasSnapshot && sale.netProfit !== null && sale.profitMarginPercent !== null ? (
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold border ${
-                              sale.isLoss
-                                ? 'bg-red-100 text-red-700 border-red-300'
-                                : 'bg-green-100 text-green-800 border-green-300'
-                            }`}
-                          >
+                          <span className={sale.isLoss ? 'pnl-pill-negative' : 'pnl-pill-positive'}>
                             {sale.isLoss ? (
-                              <TrendingDown size={13} className="text-red-600" />
+                              <TrendingDown size={12} className="text-rose-500" />
                             ) : (
-                              <TrendingUp size={13} className="text-green-600" />
+                              <TrendingUp size={12} className="text-emerald-600" />
                             )}
                             {sale.isLoss ? '' : '+'}₦{sale.netProfit.toLocaleString()} ({sale.profitMarginPercent.toFixed(1)}%)
                           </span>
                         ) : (
-                          <Badge variant="default" className="text-muted-foreground font-normal text-[11px] border border-border">
+                          <Badge variant="default" className="text-[#64748b] font-normal text-[11px] border border-[#e2e8f0] bg-slate-100">
                             Omitted from P&L
                           </Badge>
                         )}
@@ -349,21 +352,28 @@ export default function ProfitLossPage() {
                   {pnlData?.liveMargins.map((item) => (
                     <tr
                       key={item.extension}
-                      className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors ${
-                        item.isLoss ? 'bg-red-50/15' : ''
-                      }`}
+                      onClick={() =>
+                        setInspectedRecord({
+                          type: 'LIVE TLD MARGIN',
+                          title: `.${item.extension}`,
+                          subtitle: `Retail: ₦${item.finalRetailPrice.toLocaleString()} | Wholesale: ₦${item.wholesaleInNgn.toLocaleString()}`,
+                          data: item,
+                          status: item.isLoss ? 'LOSS' : 'PROFIT',
+                        })
+                      }
+                      className="border-b border-[#e2e8f0] last:border-0 hover:bg-[#f8fafc] transition-colors cursor-pointer group"
                     >
-                      <td className="py-4 pr-4 font-bold text-foreground">
+                      <td className="py-4 pr-4 font-bold text-[#0f172a] group-hover:text-emerald-600 transition-colors font-mono">
                         .{item.extension}
                       </td>
-                      <td className="py-4 pr-4 text-muted-foreground">
+                      <td className="py-4 pr-4 text-[#64748b] font-mono text-xs">
                         {item.wholesaleCurrency === 'EUR' ? '€' : '$'}
                         {item.wholesalePrice.toFixed(2)} {item.wholesaleCurrency}
                       </td>
-                      <td className="py-4 pr-4 text-muted-foreground font-mono">
+                      <td className="py-4 pr-4 text-[#64748b] font-mono text-xs">
                         ₦{item.exchangeRate.toLocaleString()}
                       </td>
-                      <td className="py-4 pr-4 font-mono text-muted-foreground">
+                      <td className="py-4 pr-4 font-mono text-xs text-[#64748b]">
                         ₦{item.wholesaleInNgn.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
                       <td className="py-4 pr-4">
@@ -375,21 +385,15 @@ export default function ProfitLossPage() {
                           <Badge variant="default">+{item.markupPercentage}% Markup</Badge>
                         )}
                       </td>
-                      <td className="py-4 pr-4 text-right font-bold text-primary font-mono text-base">
+                      <td className="py-4 pr-4 text-right font-bold text-[#0f172a] font-mono text-xs">
                         ₦{item.finalRetailPrice.toLocaleString()}
                       </td>
                       <td className="py-4 text-right font-mono font-bold">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold border ${
-                            item.isLoss
-                              ? 'bg-red-100 text-red-700 border-red-300'
-                              : 'bg-green-100 text-green-800 border-green-300'
-                          }`}
-                        >
+                        <span className={item.isLoss ? 'pnl-pill-negative' : 'pnl-pill-positive'}>
                           {item.isLoss ? (
-                            <TrendingDown size={13} className="text-red-600" />
+                            <TrendingDown size={12} className="text-rose-500" />
                           ) : (
-                            <TrendingUp size={13} className="text-green-600" />
+                            <TrendingUp size={12} className="text-emerald-600" />
                           )}
                           {item.isLoss ? '' : '+'}₦{item.netProfit.toLocaleString()} ({item.profitMarginPercent.toFixed(1)}%)
                         </span>
@@ -402,6 +406,17 @@ export default function ProfitLossPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Row Inspector Drawer */}
+      <RowDetailDrawer
+        isOpen={!!inspectedRecord}
+        onClose={() => setInspectedRecord(null)}
+        title={inspectedRecord?.title || 'Financial Record'}
+        subtitle={inspectedRecord?.subtitle}
+        entityType={inspectedRecord?.type || 'P&L RECORD'}
+        data={inspectedRecord?.data}
+        status={inspectedRecord?.status}
+      />
     </div>
   );
 }

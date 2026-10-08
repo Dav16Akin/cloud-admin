@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { RowDetailDrawer } from '@/components/ui/row-detail-drawer';
 import {
   useAdminHosting,
   useUpdateHosting,
@@ -32,6 +33,7 @@ export default function HostingPage() {
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
+  const [inspectedAccount, setInspectedAccount] = useState<any | null>(null);
 
   // Modal / Form States
   const [selectedAccount, setSelectedAccount] = useState<any | null>(null);
@@ -128,16 +130,16 @@ export default function HostingPage() {
       {/* Toast Notification Banner */}
       {notification && (
         <div
-          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border shadow-lg transition-all duration-300 ${
+          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border shadow-lg rounded-xl transition-all duration-300 ${
             notification.type === 'success'
-              ? 'bg-[#fff8ee] border-[#e8900a]/20 text-[#031033]'
-              : 'bg-destructive/10 border-destructive/20 text-destructive'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}
         >
           {notification.type === 'success' ? (
-            <Check size={18} className="text-[#e8900a]" />
+            <Check size={18} className="text-emerald-600" />
           ) : (
-            <AlertCircle size={18} />
+            <AlertCircle size={18} className="text-rose-600" />
           )}
           <span className="text-sm font-medium">{notification.message}</span>
         </div>
@@ -146,8 +148,8 @@ export default function HostingPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Hosting Accounts</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0f172a]">Hosting Accounts</h1>
+          <p className="text-sm text-[#64748b]">
             Manage user cPanel credentials, server IPs, visibility state, and active subscriptions.
           </p>
         </div>
@@ -218,13 +220,13 @@ export default function HostingPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <CardTitle>All Active cPanel Subscriptions</CardTitle>
             <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#94a3b8]" />
               <input
                 type="text"
                 placeholder="Search domain, username, IP, or user email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-sm border border-border pl-9 pr-4 py-2 bg-background focus:outline-[#e8900a]"
+                className="w-full text-xs border border-[#cbd5e1] rounded-lg pl-9 pr-4 py-2 bg-white text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:ring-1 focus:ring-slate-400"
               />
             </div>
           </div>
@@ -259,33 +261,34 @@ export default function HostingPage() {
                   {filteredHostings.map((acc) => (
                     <tr
                       key={acc.id}
-                      className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                      onClick={() => setInspectedAccount(acc)}
+                      className="border-b border-[#e2e8f0] last:border-0 hover:bg-[#f8fafc] transition-colors cursor-pointer group"
                     >
-                      <td className="py-4 pr-4 font-bold text-foreground flex items-center gap-2">
-                        <Globe size={14} className="text-muted-foreground" />
+                      <td className="py-4 pr-4 font-bold text-[#0f172a] group-hover:text-emerald-600 transition-colors flex items-center gap-2">
+                        <Globe size={14} className="text-[#64748b]" />
                         {acc.domain}
                       </td>
-                      <td className="py-4 pr-4 text-muted-foreground font-mono">
+                      <td className="py-4 pr-4 text-[#64748b] font-mono text-xs">
                         {acc.cpanelUsername}
                       </td>
                       <td className="py-4 pr-4">
-                        <div className="text-foreground font-semibold">{acc.plan?.name}</div>
-                        <div className="text-muted-foreground text-xs flex items-center gap-1 mt-0.5">
+                        <div className="text-[#0f172a] font-medium text-xs">{acc.plan?.name}</div>
+                        <div className="text-[#64748b] text-[11px] flex items-center gap-1 mt-0.5">
                           <HardDrive size={10} />
                           {acc.plan?.storage}
                         </div>
                       </td>
-                      <td className="py-4 pr-4 text-muted-foreground font-mono">
+                      <td className="py-4 pr-4 text-[#64748b] font-mono text-xs">
                         {acc.serverIp || '—'}
                       </td>
                       <td className="py-4 pr-4">
-                        <div className="text-foreground font-semibold flex items-center gap-1">
-                          <User size={12} className="text-muted-foreground" />
+                        <div className="text-[#0f172a] font-medium text-xs flex items-center gap-1">
+                          <User size={12} className="text-[#64748b]" />
                           {acc.user?.firstName} {acc.user?.lastName}
                         </div>
-                        <div className="text-muted-foreground text-xs">{acc.user?.email}</div>
+                        <div className="text-[#64748b] text-[11px]">{acc.user?.email}</div>
                       </td>
-                      <td className="py-4 pr-4 text-muted-foreground">
+                      <td className="py-4 pr-4 text-[#64748b] text-xs">
                         <div className="flex items-center gap-1">
                           <Calendar size={12} />
                           {new Date(acc.expiresAt).toLocaleDateString()}
@@ -307,7 +310,10 @@ export default function HostingPage() {
                       <td className="py-4 text-right">
                         <div className="flex justify-end items-center gap-1.5">
                           <Button
-                            onClick={() => handleOpenEditModal(acc)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditModal(acc);
+                            }}
                             variant="outline"
                             size="sm"
                             className="px-2 py-1 h-7 text-xs font-semibold"
@@ -316,8 +322,11 @@ export default function HostingPage() {
                             Edit
                           </Button>
                           <button
-                            onClick={() => handleDeleteAccount(acc)}
-                            className="p-1 text-destructive hover:bg-destructive/10 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteAccount(acc);
+                            }}
+                            className="p-1 text-[#94a3b8] hover:text-rose-600 transition-colors cursor-pointer"
                             title="Delete hosting account record"
                           >
                             <Trash2 size={14} />
@@ -338,17 +347,17 @@ export default function HostingPage() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-[#031033]/40 backdrop-blur-xs z-40 transition-opacity duration-300 opacity-100"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 transition-opacity duration-300 opacity-100"
             onClick={() => setIsModalOpen(false)}
           />
 
           {/* Modal Panel */}
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border shadow-2xl z-50 p-6 flex flex-col">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-[#e2e8f0] shadow-2xl rounded-xl z-50 p-6 flex flex-col">
             <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
               <h3 className="text-lg font-bold text-foreground">Configure Account: {selectedAccount.domain}</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg"
               >
                 <X size={18} />
               </button>
@@ -362,7 +371,7 @@ export default function HostingPage() {
                   required
                   value={cpanelUsername}
                   onChange={(e) => setCpanelUsername(e.target.value)}
-                  className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a] font-mono"
+                  className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
                   placeholder="e.g. nupatusr"
                 />
               </div>
@@ -374,7 +383,7 @@ export default function HostingPage() {
                   required
                   value={serverIp}
                   onChange={(e) => setServerIp(e.target.value)}
-                  className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a] font-mono"
+                  className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
                   placeholder="e.g. 192.168.1.1"
                 />
               </div>
@@ -386,7 +395,7 @@ export default function HostingPage() {
                   required
                   value={expiresAt}
                   onChange={(e) => setExpiresAt(e.target.value)}
-                  className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                  className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
@@ -395,7 +404,7 @@ export default function HostingPage() {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as any)}
-                  className="w-full text-sm border border-border p-2 bg-background focus:outline-[#e8900a]"
+                  className="w-full text-sm border border-[#cbd5e1] rounded-lg p-2 bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="SUSPENDED">SUSPENDED</option>
@@ -434,6 +443,39 @@ export default function HostingPage() {
           </div>
         </>
       )}
+
+      {/* Row Inspector Drawer */}
+      <RowDetailDrawer
+        isOpen={!!inspectedAccount}
+        onClose={() => setInspectedAccount(null)}
+        title={inspectedAccount?.domain || 'Hosting Account'}
+        subtitle={`cPanel: ${inspectedAccount?.cpanelUsername || '—'}`}
+        entityType="HOSTING ACCOUNT"
+        data={inspectedAccount}
+        status={inspectedAccount?.status}
+        statusVariant={
+          inspectedAccount?.status === 'ACTIVE'
+            ? 'success'
+            : inspectedAccount?.status === 'PENDING'
+              ? 'warning'
+              : 'danger'
+        }
+        overviewFields={
+          inspectedAccount
+            ? [
+                { label: 'Domain', value: inspectedAccount.domain },
+                { label: 'cPanel Username', value: inspectedAccount.cpanelUsername, mono: true },
+                { label: 'Server IP', value: inspectedAccount.serverIp || 'Unassigned', mono: true },
+                { label: 'Package Plan', value: inspectedAccount.plan?.name || 'Standard' },
+                { label: 'Client Email', value: inspectedAccount.user?.email || '—' },
+                { label: 'Client Name', value: `${inspectedAccount.user?.firstName || ''} ${inspectedAccount.user?.lastName || ''}`.trim() || '—' },
+                { label: 'Status', value: inspectedAccount.status },
+                { label: 'Expires Date', value: new Date(inspectedAccount.expiresAt).toLocaleDateString() },
+                { label: 'Created At', value: new Date(inspectedAccount.createdAt).toLocaleString() },
+              ]
+            : undefined
+        }
+      />
     </div>
   );
 }
