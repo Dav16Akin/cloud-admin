@@ -18,7 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  Zap,
+  Cpu,
 } from 'lucide-react';
 
 interface NavItem {
@@ -67,6 +67,7 @@ export function Sidebar() {
       title: 'INFRASTRUCTURE',
       items: [
         { href: '/hosting', label: 'Hosting', icon: Server },
+        { href: '/vps-pricing', label: 'VPS Pricing', icon: Cpu },
         { href: '/domains', label: 'Domains', icon: Globe },
         { href: '/ssl', label: 'SSL Certificates', icon: Shield },
         { href: '/plans', label: 'Plans', icon: Layers },
