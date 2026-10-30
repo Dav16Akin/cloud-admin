@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Shield,
   Cpu,
+  ScrollText,
 } from 'lucide-react';
 
 interface NavItem {
@@ -78,6 +79,7 @@ export function Sidebar() {
       items: [
         { href: '/profit-loss', label: 'Profit & Loss', icon: TrendingUp },
         { href: '/support', label: 'Support Tickets', icon: LifeBuoy },
+        { href: '/logs', label: 'Logs', icon: ScrollText },
       ],
     },
   ];

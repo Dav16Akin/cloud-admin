@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { logoutApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/auth';
 import { LogOut, Search, Bell, ChevronRight, RefreshCw } from 'lucide-react';
 
@@ -15,6 +16,7 @@ const routeTitleMap: Record<string, { category: string; title: string }> = {
   '/plans': { category: 'Infrastructure', title: 'Plans' },
   '/profit-loss': { category: 'Analytics', title: 'Profit & Loss' },
   '/support': { category: 'Support', title: 'Support Tickets' },
+  '/logs': { category: 'Support', title: 'Logs' },
 };
 
 export function Topbar() {
@@ -23,7 +25,10 @@ export function Topbar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  function handleLogout() {
+  async function handleLogout() {
+    // Revoke the session server-side too; clearing local state alone leaves
+    // the refresh cookie usable on a shared machine.
+    await logoutApi().catch(() => undefined);
     logout();
     router.push('/login');
   }

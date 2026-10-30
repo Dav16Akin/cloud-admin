@@ -6,13 +6,31 @@ export class ApiRequestError extends Error {
   success: false;
   status: number;
   error: string;
+  /** Stable machine-readable code from the backend, e.g. ROUTE_NOT_FOUND. */
+  code?: string;
+  /** Identifies the request in the backend logs (Logs page). */
+  requestId?: string;
+  fieldErrors?: Record<string, string[]>;
 
-  constructor(status: number, message: string, error: string) {
-    super(message);
+  constructor(
+    status: number,
+    message: string,
+    error: string,
+    body?: { requestId?: unknown; code?: unknown; fieldErrors?: unknown },
+  ) {
+    const requestId = typeof body?.requestId === 'string' ? body.requestId : undefined;
+    // Server errors carry their request ID so it can be looked up on the Logs page.
+    super(status >= 500 && requestId ? `${message} (Request ID: ${requestId})` : message);
     this.name = 'ApiRequestError';
     this.success = false;
     this.status = status;
     this.error = error;
+    this.code = typeof body?.code === 'string' ? body.code : undefined;
+    this.requestId = requestId;
+    this.fieldErrors =
+      body?.fieldErrors && typeof body.fieldErrors === 'object'
+        ? (body.fieldErrors as Record<string, string[]>)
+        : undefined;
   }
 }
 
@@ -42,6 +60,9 @@ function processQueue(err: Error | null, newToken: string | null): void {
 }
 
 async function fetchWithRefresh(url: string, options: RequestInit, allowRefresh: boolean): Promise<Response> {
+  // The API is on another origin, so without this the browser drops the
+  // refresh-token cookie set at login and every session ends after 15 minutes.
+  options = { ...options, credentials: 'include' };
   let res = await fetch(url, options);
 
   if (res.status === 401 && allowRefresh) {
@@ -137,13 +158,19 @@ export async function api<T = unknown>(
     // Only attempt refresh when using the store's token (not explicitly passed)
     !explicitToken && !!useAuthStore.getState().token,
   );
-  const json = await res.json();
+  // Proxies and Vercel can answer with an HTML error page instead of JSON.
+  const isJson = res.headers.get('content-type')?.includes('application/json');
+  const json = isJson
+    ? await res.json().catch(() => ({}))
+    : { message: res.ok ? undefined : `Request failed with status ${res.status}` };
 
   if (!res.ok) {
+    if (!json.requestId) json.requestId = res.headers.get('x-request-id') ?? undefined;
     throw new ApiRequestError(
       res.status,
       json.message || 'Request failed',
       json.error || json.message || 'Unknown error',
+      json,
     );
   }
 

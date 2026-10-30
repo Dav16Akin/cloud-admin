@@ -12,6 +12,11 @@ export async function getMeApi(token?: string): Promise<User> {
   return api<User>('/auth/me', token ? { token } : {});
 }
 
+/** Revokes the refresh-token cookie on the server. */
+export async function logoutApi(): Promise<void> {
+  await api('/auth/logout', { method: 'POST' });
+}
+
 export async function refreshApi(): Promise<LoginResponse> {
   return api<LoginResponse>('/auth/refresh', {
     method: 'POST',
